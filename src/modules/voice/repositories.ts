@@ -1,0 +1,115 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { assertNoError } from "../shared/supabase-client";
+import type { CallAgent, CallFlow, CallJob, CallJobEvent } from "./types";
+
+export async function listCallAgentsRepository(client: SupabaseClient, organizationId: string) {
+  const { data, error } = await client
+    .from("call_agents")
+    .select("*")
+    .eq("organization_id", organizationId)
+    .order("updated_at", { ascending: false });
+  assertNoError(error);
+  return (data ?? []) as CallAgent[];
+}
+
+export async function createCallAgentRepository(client: SupabaseClient, payload: Partial<CallAgent>) {
+  const { data, error } = await client.from("call_agents").insert(payload).select().single();
+  assertNoError(error);
+  return data as CallAgent;
+}
+
+export async function listCallFlowsRepository(client: SupabaseClient, organizationId: string) {
+  const { data, error } = await client
+    .from("call_flows")
+    .select("*, automation:automations(id, name, trigger_type, action_type)")
+    .eq("organization_id", organizationId)
+    .order("updated_at", { ascending: false });
+  assertNoError(error);
+  return (data ?? []) as unknown as Array<CallFlow & { automation?: { id: string; name: string; trigger_type: string; action_type: string } | null }>;
+}
+
+export async function getCallFlowRepository(client: SupabaseClient, organizationId: string, flowId: string) {
+  const { data, error } = await client
+    .from("call_flows")
+    .select("*")
+    .eq("organization_id", organizationId)
+    .eq("id", flowId)
+    .maybeSingle();
+  assertNoError(error);
+  return (data ?? null) as CallFlow | null;
+}
+
+export async function createCallFlowRepository(client: SupabaseClient, payload: Partial<CallFlow>) {
+  const { data, error } = await client.from("call_flows").insert(payload).select().single();
+  assertNoError(error);
+  return data as CallFlow;
+}
+
+export async function listCallJobsRepository(client: SupabaseClient, organizationId: string) {
+  const { data, error } = await client
+    .from("call_jobs")
+    .select(
+      "*, contact:contacts(id, full_name, phone, company), agent:call_agents(id, name, from_number), flow:call_flows(id, name, objective)"
+    )
+    .eq("organization_id", organizationId)
+    .order("created_at", { ascending: false })
+    .limit(100);
+  assertNoError(error);
+  return (data ?? []) as unknown as Array<
+    CallJob & {
+      contact?: { id: string; full_name: string; phone: string | null; company: string | null } | null;
+      agent?: { id: string; name: string; from_number: string } | null;
+      flow?: { id: string; name: string; objective: string } | null;
+    }
+  >;
+}
+
+export async function getCallJobRepository(client: SupabaseClient, organizationId: string, jobId: string) {
+  const { data, error } = await client
+    .from("call_jobs")
+    .select("*")
+    .eq("organization_id", organizationId)
+    .eq("id", jobId)
+    .maybeSingle();
+  assertNoError(error);
+  return (data ?? null) as CallJob | null;
+}
+
+export async function getCallJobBySidRepository(client: SupabaseClient, callSid: string) {
+  const { data, error } = await client
+    .from("call_jobs")
+    .select("*")
+    .eq("twilio_call_sid", callSid)
+    .maybeSingle();
+  assertNoError(error);
+  return (data ?? null) as CallJob | null;
+}
+
+export async function createCallJobRepository(client: SupabaseClient, payload: Partial<CallJob>) {
+  const { data, error } = await client.from("call_jobs").insert(payload).select().single();
+  assertNoError(error);
+  return data as CallJob;
+}
+
+export async function updateCallJobRepository(
+  client: SupabaseClient,
+  organizationId: string,
+  jobId: string,
+  payload: Partial<CallJob>
+) {
+  const { data, error } = await client
+    .from("call_jobs")
+    .update(payload)
+    .eq("organization_id", organizationId)
+    .eq("id", jobId)
+    .select()
+    .single();
+  assertNoError(error);
+  return data as CallJob;
+}
+
+export async function createCallJobEventRepository(client: SupabaseClient, payload: Partial<CallJobEvent>) {
+  const { data, error } = await client.from("call_job_events").insert(payload).select().single();
+  assertNoError(error);
+  return data as CallJobEvent;
+}

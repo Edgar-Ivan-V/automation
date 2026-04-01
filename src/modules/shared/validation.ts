@@ -1,4 +1,4 @@
-import { ValidationError } from "./errors";
+import { ValidationError } from "./errors.js";
 
 export function requireNonEmptyString(value: unknown, field: string) {
   if (typeof value !== "string" || !value.trim()) {

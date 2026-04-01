@@ -1,3 +1,3 @@
-export * from "./errors";
-export * from "./supabase-client";
-export * from "./validation";
+export * from "./errors.js";
+export * from "./supabase-client.js";
+export * from "./validation.js";

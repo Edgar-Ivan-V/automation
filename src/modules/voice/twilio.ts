@@ -1,5 +1,5 @@
 import { createHmac } from "crypto";
-import { ValidationError } from "../shared/errors";
+import { ValidationError } from "../shared/errors.js";
 
 export interface TwilioCallRequest {
   to: string;

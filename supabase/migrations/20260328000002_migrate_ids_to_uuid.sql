@@ -6,6 +6,8 @@ begin
 end;
 $$ language plpgsql;
 
+create extension if not exists vector with schema extensions;
+
 do $$
 declare
   tbl text;
@@ -66,6 +68,17 @@ set contact_uuid = c.new_id
 from public.contacts c
 where c.id = a.contact_id;
 
+create table if not exists public.audit_logs (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid references auth.users(id) on delete set null,
+  organization_id uuid references public.organizations(id) on delete cascade,
+  action text not null default 'system',
+  entity_type text,
+  entity_id uuid,
+  payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default timezone('utc', now())
+);
+
 alter table public.audit_logs add column if not exists organization_id uuid;
 update public.audit_logs l
 set organization_id = u.default_organization_id
@@ -74,8 +87,25 @@ where u.id = l.owner_id
   and l.organization_id is null;
 
 -- Drop all FKs that reference the old text PKs before changing them
-alter table public.contact_note_embeddings drop constraint if exists contact_note_embeddings_contact_id_fkey;
-alter table public.message_embeddings drop constraint if exists message_embeddings_message_id_fkey;
+do $$
+begin
+  if exists (
+    select 1
+    from information_schema.tables
+    where table_schema = 'public' and table_name = 'contact_note_embeddings'
+  ) then
+    execute 'alter table public.contact_note_embeddings drop constraint if exists contact_note_embeddings_contact_id_fkey';
+  end if;
+
+  if exists (
+    select 1
+    from information_schema.tables
+    where table_schema = 'public' and table_name = 'message_embeddings'
+  ) then
+    execute 'alter table public.message_embeddings drop constraint if exists message_embeddings_message_id_fkey';
+  end if;
+end $$;
+
 alter table public.conversations drop constraint if exists conversations_contact_id_fkey;
 alter table public.opportunities drop constraint if exists opportunities_contact_id_fkey;
 alter table public.appointments drop constraint if exists appointments_contact_id_fkey;

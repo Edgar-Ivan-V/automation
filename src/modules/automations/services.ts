@@ -4,11 +4,11 @@ import {
   getAutomationRepository,
   listAutomationsRepository,
   updateAutomationRepository,
-} from "./repositories";
-import { requireServiceSupabaseClient } from "../shared/supabase-client";
-import { NotFoundError } from "../shared/errors";
-import { optionalString, requireNonEmptyString } from "../shared/validation";
-import type { AutomationStatus, CreateAutomationInput, UpdateAutomationInput } from "./types";
+} from "./repositories.js";
+import { requireServiceSupabaseClient } from "../shared/supabase-client.js";
+import { NotFoundError } from "../shared/errors.js";
+import { optionalString, requireNonEmptyString } from "../shared/validation.js";
+import type { AutomationStatus, CreateAutomationInput, UpdateAutomationInput } from "./types.js";
 
 const validStatuses = new Set<AutomationStatus>(["draft", "active", "paused"]);
 

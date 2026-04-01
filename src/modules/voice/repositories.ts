@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { assertNoError } from "../shared/supabase-client";
-import type { CallAgent, CallFlow, CallJob, CallJobEvent } from "./types";
+import { assertNoError } from "../shared/supabase-client.js";
+import type { CallAgent, CallFlow, CallJob, CallJobEvent } from "./types.js";
 
 export async function listCallAgentsRepository(client: SupabaseClient, organizationId: string) {
   const { data, error } = await client

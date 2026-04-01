@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { assertNoError } from "../shared/supabase-client";
-import type { Automation } from "./types";
+import { assertNoError } from "../shared/supabase-client.js";
+import type { Automation } from "./types.js";
 
 export async function listAutomationsRepository(client: SupabaseClient, organizationId: string) {
   const { data, error } = await client

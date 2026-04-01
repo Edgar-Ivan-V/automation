@@ -1,0 +1,1167 @@
+
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Automation Hub</title>
+    <style>
+      :root {
+        --bg: #f4f7fb;
+        --panel: #ffffff;
+        --panel-soft: #f8fafc;
+        --line: #dbe4f0;
+        --text: #122033;
+        --muted: #64748b;
+        --muted-strong: #44556a;
+        --blue: #2563eb;
+        --blue-soft: #dbeafe;
+        --green: #059669;
+        --green-soft: #dcfce7;
+        --amber: #b45309;
+        --amber-soft: #fef3c7;
+        --violet: #7c3aed;
+        --violet-soft: #ede9fe;
+        --danger: #b91c1c;
+        --shadow: 0 24px 64px rgba(15, 23, 42, 0.1);
+        --radius-xl: 28px;
+        --radius-lg: 22px;
+        --radius-md: 16px;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        color: var(--text);
+        font-family: "Aptos", "Segoe UI Variable", "Segoe UI", sans-serif;
+        background:
+          radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 28%),
+          radial-gradient(circle at top right, rgba(124, 58, 237, 0.08), transparent 24%),
+          linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
+      }
+
+      h1, h2, h3, .display {
+        font-family: "Aptos Display", "Aptos", sans-serif;
+        letter-spacing: -0.03em;
+      }
+
+      button, input, select, textarea { font: inherit; }
+      .shell { width: min(1440px, calc(100vw - 28px)); margin: 18px auto 32px; }
+      .hidden { display: none !important; }
+
+      .topbar, .panel {
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(219, 228, 240, 0.92);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(14px);
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 24px 28px;
+      }
+
+      .topbar h1 { margin: 0; font-size: clamp(34px, 5vw, 50px); }
+      .topbar p {
+        margin: 8px 0 0;
+        color: var(--muted);
+        max-width: 760px;
+        line-height: 1.6;
+        font-size: 14px;
+      }
+
+      .toolbar { display: flex; gap: 10px; flex-wrap: wrap; }
+      .button, .ghost-button, .soft-button {
+        min-height: 44px; padding: 0 16px; border-radius: 16px; border: 1px solid transparent; cursor: pointer;
+      }
+      .button { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; }
+      .ghost-button { background: #fff; color: var(--text); border-color: var(--line); }
+      .soft-button { background: var(--panel-soft); border-color: var(--line); color: var(--muted-strong); }
+      .status-line { margin-top: 10px; font-size: 13px; color: var(--muted); }
+      .status-line.ok { color: var(--green); }
+      .status-line.error { color: var(--danger); }
+
+      .channels-panel, .summary-panel, .editor-panel { margin-top: 18px; }
+      .panel-body, .summary-body, .editor-body { padding: 22px; }
+      .panel-title { margin: 0; font-size: 24px; }
+      .panel-subtitle { margin-top: 6px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+
+      .channel-strip {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        margin-top: 16px;
+      }
+
+      .platform-button, .account-button {
+        text-align: left; border: 1px solid var(--line); background: #fff; border-radius: 20px; padding: 18px; cursor: pointer;
+      }
+      .platform-button {
+        min-height: 132px;
+      }
+      .platform-button.active, .account-button.active {
+        border-color: #93c5fd; background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
+        box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.12);
+      }
+
+      .platform-row, .account-row, .section-row, .item-row {
+        display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      }
+      .platform-label, .account-label, .item-title { font-weight: 700; }
+      .platform-sub, .account-sub, .item-sub, .helper-text, .empty {
+        color: var(--muted); font-size: 13px; line-height: 1.5;
+      }
+
+      .channel-badge, .count-badge, .badge {
+        display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 12px;
+        border-radius: 999px; font-size: 12px; font-weight: 700;
+      }
+      .channel-badge { width: 42px; height: 42px; padding: 0; border-radius: 14px; font-weight: 800; }
+      .count-badge, .badge.info { background: var(--blue-soft); color: var(--blue); }
+      .badge.ok { background: var(--green-soft); color: var(--green); }
+      .badge.warn { background: var(--amber-soft); color: var(--amber); }
+      .badge.local { background: var(--violet-soft); color: var(--violet); }
+      .tone-automations { background: #e0f2fe; color: #0369a1; }
+      .tone-email { background: #dbeafe; color: #1d4ed8; }
+      .tone-facebook { background: #dbeafe; color: #1d4ed8; }
+      .tone-instagram { background: #fae8ff; color: #a21caf; }
+      .tone-x { background: #e2e8f0; color: #0f172a; }
+      .tone-tiktok { background: #fee2e2; color: #be123c; }
+      .tone-whatsapp { background: #dcfce7; color: #15803d; }
+      .tone-messenger { background: #ede9fe; color: #6d28d9; }
+      .tone-phone { background: #dcfce7; color: #047857; }
+
+      .summary-grid {
+        display: grid; gap: 14px; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 16px;
+      }
+      .metric-card, .section-card, .form-card, .list-card, .hero-card {
+        background: #fff; border: 1px solid var(--line); border-radius: var(--radius-lg);
+      }
+      .metric-card, .section-card, .form-card, .list-card, .hero-card { padding: 18px; }
+      .metric-label { color: var(--muted); font-size: 13px; }
+      .metric-value { margin-top: 8px; font-size: 34px; }
+      .summary-stack { display: grid; gap: 14px; margin-top: 14px; }
+      .hero-title { margin: 0; font-size: 30px; }
+      .hero-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+      .chart-grid { display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .chart-card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 18px; }
+      .chart-title { font-weight: 700; margin-bottom: 12px; }
+      .bar-list { display: grid; gap: 10px; }
+      .bar-row { display: grid; gap: 6px; }
+      .bar-head { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--muted-strong); }
+      .bar-track { height: 12px; border-radius: 999px; background: #edf2f7; overflow: hidden; }
+      .bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #2563eb, #7c3aed); }
+
+      .editor-workspace { display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 18px; }
+      .accounts-list, .detail-stack, .list-grid { display: grid; gap: 12px; }
+      .field { margin-top: 12px; }
+      label { display: block; margin-bottom: 8px; color: var(--muted); font-size: 13px; }
+      input, select, textarea {
+        width: 100%; min-height: 44px; padding: 12px 14px; border-radius: var(--radius-md); border: 1px solid var(--line);
+        background: #fff; color: var(--text); outline: none;
+      }
+      textarea { min-height: 96px; resize: vertical; }
+      .section-actions { margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; }
+      .list-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .empty-state { padding: 28px; text-align: center; }
+
+      @media (max-width: 1180px) {
+        .channel-strip, .summary-grid, .chart-grid, .editor-workspace { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      }
+      @media (max-width: 860px) {
+        .shell { width: min(100vw - 16px, 1440px); }
+        .topbar, .toolbar, .section-row, .item-row, .section-actions, .list-grid.three, .hero-actions { flex-direction: column; align-items: stretch; }
+        .channel-strip, .summary-grid, .chart-grid { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="topbar">
+        <div>
+          <h1>Automation Hub</h1>
+          <p>Administra canales y automatizaciones desde un mismo panel. Por defecto ves el resumen. El editor de cuentas y workspace solo aparece al pulsar editar.</p>
+          <div id="statusLine" class="status-line">Cargando datos del backend...</div>
+        </div>
+        <div class="toolbar">
+          <button id="refreshButton" class="ghost-button" type="button">Recargar</button>
+        </div>
+      </section>
+
+      <section class="panel channels-panel">
+        <div class="panel-body">
+          <h2 class="panel-title">Canales</h2>
+          <div class="panel-subtitle">Selecciona un canal para filtrar tu resumen o abrir su editor.</div>
+          <div id="platformList" class="channel-strip"></div>
+        </div>
+      </section>
+
+      <section id="summaryView" class="panel summary-panel">
+        <div id="summaryRoot" class="summary-body"></div>
+      </section>
+
+      <section id="editorView" class="panel editor-panel hidden">
+        <div class="editor-body">
+          <div class="section-card" style="margin-bottom: 16px;">
+            <div class="section-row">
+              <div>
+                <div class="item-title">Editor del canal</div>
+                <div class="item-sub">Gestiona cuentas y workspace del canal seleccionado.</div>
+              </div>
+              <div class="section-actions">
+                <button id="backButton" class="ghost-button" type="button">Volver</button>
+              </div>
+            </div>
+          </div>
+          <div class="editor-workspace">
+            <aside>
+              <div class="section-card">
+                <div class="section-row">
+                  <div>
+                    <h2 id="accountsTitle" class="panel-title">Cuentas</h2>
+                    <div id="accountsSubtitle" class="panel-subtitle"></div>
+                  </div>
+                  <div id="accountsCount" class="count-badge">0</div>
+                </div>
+
+                <form id="addAccountForm" class="form-card" style="margin-top: 16px;">
+                  <div class="item-row">
+                    <div>
+                      <div class="item-title">Agregar cuenta</div>
+                      <div class="item-sub">Conecta una nueva cuenta al canal actual.</div>
+                    </div>
+                    <div id="selectedPlatformBadge" class="badge info">Canal</div>
+                  </div>
+                  <div class="field">
+                    <label for="accountName">Nombre visible</label>
+                    <input id="accountName" name="name" placeholder="Cuenta principal" />
+                  </div>
+                  <div class="field">
+                    <label for="accountHandle">Identificador</label>
+                    <input id="accountHandle" name="handle" placeholder="@marca o correo@dominio.com" />
+                  </div>
+                  <div class="section-actions">
+                    <button class="button" type="submit">Agregar cuenta</button>
+                  </div>
+                </form>
+
+                <div id="accountsList" class="accounts-list" style="margin-top: 16px;"></div>
+              </div>
+            </aside>
+
+            <section>
+              <div id="detailRoot" class="detail-stack"></div>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const STORAGE_KEY = "automation.channelAccounts.v5";
+      const PLATFORMS = [
+        { id: "automations", label: "Automatizaciones", short: "AU", tone: "tone-automations", description: "Borradores y estructuras de automatizacion por cuenta." },
+        { id: "email", label: "Email", short: "EM", tone: "tone-email", description: "Bandejas, remitentes y secuencias de correo." },
+        { id: "facebook", label: "Facebook", short: "FB", tone: "tone-facebook", description: "Paginas y activos de Facebook conectados." },
+        { id: "instagram", label: "Instagram", short: "IG", tone: "tone-instagram", description: "Perfiles, fotos, historias y reels." },
+        { id: "x", label: "X", short: "X", tone: "tone-x", description: "Perfiles y flujos para publicaciones y mensajes." },
+        { id: "tiktok", label: "TikTok", short: "TT", tone: "tone-tiktok", description: "Cuentas para videos, respuestas y captacion." },
+        { id: "whatsapp", label: "WhatsApp", short: "WA", tone: "tone-whatsapp", description: "Numeros y bandejas de WhatsApp Business." },
+        { id: "messenger", label: "Messenger", short: "MS", tone: "tone-messenger", description: "Canales de Messenger conectados." },
+        { id: "phone", label: "Telefono", short: "PH", tone: "tone-phone", description: "Lineas telefonicas y bots de voz del backend actual." }
+      ];
+
+      function makeId(prefix) {
+        if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+        return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+      }
+
+      function seedAccount(platformId, name, handle) {
+        return {
+          id: makeId("account"),
+          platformId,
+          name,
+          handle,
+          status: "connected",
+          connectedAt: new Date().toISOString(),
+          agents: platformId === "phone" ? [] : [{ id: makeId("agent"), name: "Asistente base", objective: "Responder conversaciones iniciales" }],
+          automations: platformId === "phone" ? [] : [{ id: makeId("automation"), name: "Seguimiento inicial", status: "active", description: "Secuencia de respuesta y captura de lead." }]
+        };
+      }
+
+      const DEFAULT_ACCOUNTS = [
+        seedAccount("automations", "Workspace general", "automation-hub"),
+        seedAccount("email", "Ventas", "ventas@agencyhub.mx"),
+        seedAccount("facebook", "Agency Hub Page", "facebook.com/agencyhub"),
+        seedAccount("instagram", "Agency Hub", "@agencyhub"),
+        seedAccount("x", "Agency Hub Updates", "@agencyhub"),
+        seedAccount("tiktok", "Agency Hub Studio", "@agencyhub"),
+        seedAccount("whatsapp", "WhatsApp MX", "+5215512345678"),
+        seedAccount("messenger", "Messenger Principal", "Agency Hub Inbox"),
+        seedAccount("phone", "Linea principal", "+15005550006")
+      ];
+
+      function cloneData(value) {
+        return JSON.parse(JSON.stringify(value));
+      }
+
+      function loadAccounts() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_ACCOUNTS));
+            return cloneData(DEFAULT_ACCOUNTS);
+          }
+          const parsed = JSON.parse(raw);
+          return Array.isArray(parsed) && parsed.length ? parsed : cloneData(DEFAULT_ACCOUNTS);
+        } catch {
+          return cloneData(DEFAULT_ACCOUNTS);
+        }
+      }
+
+      const state = {
+        snapshot: null,
+        channelSnapshot: null,
+        accounts: loadAccounts(),
+        selectedPlatformId: "automations",
+        selectedAccountId: null,
+        isEditing: false
+      };
+
+      const statusLine = document.getElementById("statusLine");
+      const platformList = document.getElementById("platformList");
+      const summaryView = document.getElementById("summaryView");
+      const summaryRoot = document.getElementById("summaryRoot");
+      const editorView = document.getElementById("editorView");
+      const accountsTitle = document.getElementById("accountsTitle");
+      const accountsSubtitle = document.getElementById("accountsSubtitle");
+      const accountsCount = document.getElementById("accountsCount");
+      const accountsList = document.getElementById("accountsList");
+      const detailRoot = document.getElementById("detailRoot");
+      const selectedPlatformBadge = document.getElementById("selectedPlatformBadge");
+      const addAccountForm = document.getElementById("addAccountForm");
+      const refreshButton = document.getElementById("refreshButton");
+      const backButton = document.getElementById("backButton");
+
+      function persistAccounts() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state.accounts));
+      }
+
+      function getSelectedPlatform() {
+        return PLATFORMS.find((item) => item.id === state.selectedPlatformId) || PLATFORMS[0];
+      }
+
+      function getAccountsForPlatform(platformId = state.selectedPlatformId) {
+        return state.accounts.filter((item) => item.platformId === platformId);
+      }
+
+      function getSelectedAccount() {
+        return state.accounts.find((item) => item.id === state.selectedAccountId) || null;
+      }
+
+      function getGenericSnapshot() {
+        return state.channelSnapshot ?? { accounts: [], agents: [], flows: [], jobs: [], channels: {}, contacts: [], automations: [] };
+      }
+
+      function getChannelAccountsRaw(platformId = state.selectedPlatformId) {
+        return (getGenericSnapshot().accounts ?? []).filter((item) => item.channel === platformId);
+      }
+
+      function getChannelAgentsForAccount(accountId) {
+        return (getGenericSnapshot().agents ?? []).filter((item) => item.account_id === accountId);
+      }
+
+      function getChannelFlowsForAccount(accountId) {
+        return (getGenericSnapshot().flows ?? []).filter((item) => item.account_id === accountId);
+      }
+
+      function getChannelJobsForAccount(accountId) {
+        return (getGenericSnapshot().jobs ?? []).filter((item) => item.account_id === accountId);
+      }
+
+      function getChannelActions(platformId = state.selectedPlatformId) {
+        return getGenericSnapshot().channels?.[platformId]?.actions ?? [];
+      }
+
+      function syncAccountsFromChannels() {
+        if (!state.channelSnapshot) return;
+        const phoneAccounts = state.accounts.filter((item) => item.platformId === "phone");
+        const fallbackPhoneAccount = phoneAccounts.length ? phoneAccounts : [seedAccount("phone", "Linea principal", "+15005550006")];
+        const mappedAccounts = (state.channelSnapshot.accounts ?? []).map((account) => ({
+          id: account.id,
+          platformId: account.channel,
+          name: account.name,
+          handle: account.handle || "Sin identificador",
+          status: account.status === "connected" ? "connected" : "pending",
+          connectedAt: account.connected_at || account.created_at,
+          agents: getChannelAgentsForAccount(account.id).map((agent) => ({ id: agent.id, name: agent.name, objective: agent.objective || agent.persona_prompt || "Sin objetivo" })),
+          automations: getChannelFlowsForAccount(account.id).map((flow) => ({ id: flow.id, name: flow.name, description: flow.objective, status: flow.status, action_type: flow.action_type }))
+        }));
+        state.accounts = [...mappedAccounts, ...fallbackPhoneAccount];
+        persistAccounts();
+      }
+
+      function parseJsonInput(value, fieldName) {
+        const trimmed = String(value || "").trim();
+        if (!trimmed) return undefined;
+        try {
+          return JSON.parse(trimmed);
+        } catch {
+          throw new Error(`${fieldName} debe ser JSON valido.`);
+        }
+      }
+
+      function ensureSelection() {
+        const platformAccounts = getAccountsForPlatform();
+        if (!platformAccounts.length) {
+          state.selectedAccountId = null;
+          return;
+        }
+        const exists = platformAccounts.some((item) => item.id === state.selectedAccountId);
+        if (!exists) state.selectedAccountId = platformAccounts[0].id;
+      }
+
+      function setPlatform(platformId) {
+        state.selectedPlatformId = platformId;
+        ensureSelection();
+        renderApp();
+      }
+
+      function setAccount(accountId) {
+        state.selectedAccountId = accountId;
+        renderApp();
+      }
+      function updateAccount(accountId, updater) {
+        state.accounts = state.accounts.map((account) => account.id === accountId ? updater(account) : account);
+        persistAccounts();
+        renderApp();
+      }
+
+      function renderApp() {
+        ensureSelection();
+        renderPlatforms();
+        summaryView.classList.toggle("hidden", state.isEditing);
+        editorView.classList.toggle("hidden", !state.isEditing);
+        if (state.isEditing) {
+          renderAccounts();
+          renderDetail();
+          return;
+        }
+        renderSummary();
+      }
+
+      function renderPlatforms() {
+        platformList.innerHTML = PLATFORMS.map((platform) => {
+          const count = getAccountsForPlatform(platform.id).length;
+          const analytics = getPlatformAnalytics(platform, getAccountsForPlatform(platform.id), state.snapshot);
+          return `
+            <button class="platform-button ${platform.id === state.selectedPlatformId ? "active" : ""}" data-platform-id="${platform.id}" type="button">
+              <div class="platform-row">
+                <div class="channel-badge ${platform.tone}">${platform.short}</div>
+                <div>
+                  <div class="platform-label">${escapeHtml(platform.label)}</div>
+                  <div class="platform-sub">${escapeHtml(platform.description)}</div>
+                </div>
+                <div class="count-badge">${count}</div>
+              </div>
+              <div class="section-row" style="margin-top: 14px;">
+                <div class="platform-sub">Contestados ${analytics.messagesAnswered}</div>
+                <div class="platform-sub">Leads ${analytics.leads}</div>
+              </div>
+            </button>
+          `;
+        }).join("");
+
+        platformList.querySelectorAll("[data-platform-id]").forEach((button) => {
+          button.addEventListener("click", () => setPlatform(button.dataset.platformId));
+        });
+      }
+
+      function getPlatformAnalytics(platform, accounts, snapshot) {
+        if (platform.id === "phone") {
+          const jobs = snapshot?.jobs ?? [];
+          const answered = jobs.filter((item) => item.status === "completed" || item.status === "answered").length;
+          const leads = jobs.filter((item) => item.outcome === "confirmed" || item.outcome === "callback").length;
+          const responseRate = jobs.length ? Math.round((answered / jobs.length) * 100) : 0;
+          const automationCount = snapshot?.automations?.length ?? 0;
+          const agentCount = snapshot?.agents?.length ?? 0;
+          return {
+            accountCount: accounts.length,
+            automationCount,
+            agentCount,
+            messagesAnswered: answered,
+            leads,
+            responseRate,
+            connected: Boolean(snapshot?.configured),
+            connectionLabel: snapshot?.configured ? "Conectado" : "No conectado",
+            funnel: [
+              { label: "Contactos", value: snapshot?.contacts?.length ?? 0 },
+              { label: "Conversaciones", value: jobs.length },
+              { label: "Leads", value: leads },
+              { label: "Automatizaciones", value: automationCount }
+            ],
+            health: [
+              { label: "Conectividad", value: snapshot?.configured ? 100 : 22 },
+              { label: "Respuesta", value: responseRate },
+              { label: "Automatizacion", value: Math.min(100, automationCount * 22) },
+              { label: "Agentes", value: Math.min(100, agentCount * 28) }
+            ]
+          };
+        }
+
+        if (state.channelSnapshot) {
+          const channelAccounts = getChannelAccountsRaw(platform.id);
+          const accountIds = new Set(channelAccounts.map((item) => item.id));
+          const channelAgents = (state.channelSnapshot.agents ?? []).filter((item) => accountIds.has(item.account_id));
+          const channelFlows = (state.channelSnapshot.flows ?? []).filter((item) => accountIds.has(item.account_id));
+          const channelJobs = (state.channelSnapshot.jobs ?? []).filter((item) => accountIds.has(item.account_id));
+          const messagesAnswered = channelJobs.filter((item) => item.status === "completed" || item.status === "running" || item.status === "scheduled").length * 12 + channelAgents.length * 5;
+          const leads = channelJobs.filter((item) => item.outcome === "lead_captured" || item.outcome === "published" || item.outcome === "sent").length + channelFlows.length;
+          const responseRate = channelJobs.length ? Math.min(99, Math.round((messagesAnswered / Math.max(channelJobs.length * 12, 1)) * 100)) : Math.min(96, channelFlows.length * 18 + channelAgents.length * 8);
+          return {
+            accountCount: channelAccounts.length,
+            automationCount: channelFlows.length,
+            agentCount: channelAgents.length,
+            messagesAnswered,
+            leads,
+            responseRate,
+            connected: channelAccounts.length > 0,
+            connectionLabel: channelAccounts.length > 0 ? "Conectado" : "No conectado",
+            funnel: [
+              { label: "Audiencia", value: Math.max(channelAccounts.length * 70, channelJobs.length * 15, 10) },
+              { label: "Jobs", value: channelJobs.length },
+              { label: "Leads", value: leads },
+              { label: "Flows", value: channelFlows.length }
+            ],
+            health: [
+              { label: "Conectividad", value: channelAccounts.length ? 100 : 16 },
+              { label: "Respuesta", value: responseRate },
+              { label: "Automatizacion", value: Math.min(100, channelFlows.length * 24) },
+              { label: "Agentes", value: Math.min(100, channelAgents.length * 24) }
+            ]
+          };
+        }
+
+        const automationCount = accounts.reduce((sum, account) => sum + (account.automations?.length ?? 0), 0);
+        const agentCount = accounts.reduce((sum, account) => sum + (account.agents?.length ?? 0), 0);
+        const messagesAnswered = accounts.reduce((sum, account) => sum + 8 + ((account.agents?.length ?? 0) * 18) + ((account.automations?.length ?? 0) * 22), 0);
+        const leads = accounts.reduce((sum, account) => sum + 2 + ((account.automations?.length ?? 0) * 5) + ((account.agents?.length ?? 0) * 3), 0);
+        const responseRate = messagesAnswered ? Math.max(18, Math.min(97, Math.round((leads / messagesAnswered) * 280))) : 0;
+        return {
+          accountCount: accounts.length,
+          automationCount,
+          agentCount,
+          messagesAnswered,
+          leads,
+          responseRate,
+          connected: accounts.length > 0,
+          connectionLabel: accounts.length > 0 ? "Conectado" : "No conectado",
+          funnel: [
+            { label: "Audiencia", value: Math.max(accounts.length * 60, 10) },
+            { label: "Conversaciones", value: messagesAnswered },
+            { label: "Leads", value: leads },
+            { label: "Automatizaciones", value: automationCount }
+          ],
+          health: [
+            { label: "Conectividad", value: accounts.length ? 100 : 16 },
+            { label: "Respuesta", value: responseRate },
+            { label: "Automatizacion", value: Math.min(100, automationCount * 26) },
+            { label: "Cobertura", value: Math.min(100, accounts.length * 30 + agentCount * 14) }
+          ]
+        };
+      }
+
+      function renderBarChart(title, items, suffix = "") {
+        const max = Math.max(...items.map((item) => item.value), 1);
+        return `
+          <div class="chart-card">
+            <div class="chart-title">${escapeHtml(title)}</div>
+            <div class="bar-list">
+              ${items.map((item) => `
+                <div class="bar-row">
+                  <div class="bar-head">
+                    <span>${escapeHtml(item.label)}</span>
+                    <span>${escapeHtml(String(item.value))}${suffix}</span>
+                  </div>
+                  <div class="bar-track">
+                    <div class="bar-fill" style="width:${Math.max(8, (item.value / max) * 100)}%"></div>
+                  </div>
+                </div>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      function renderSummary() {
+        const platform = getSelectedPlatform();
+        const accounts = getAccountsForPlatform();
+        const analytics = getPlatformAnalytics(platform, accounts, state.snapshot);
+        const channelAnalytics = PLATFORMS.map((item) => {
+          const itemAnalytics = getPlatformAnalytics(item, getAccountsForPlatform(item.id), state.snapshot);
+          return { label: item.label, messagesAnswered: itemAnalytics.messagesAnswered, leads: itemAnalytics.leads };
+        });
+
+        summaryRoot.innerHTML = `
+          <div class="hero-card">
+            <div class="section-row">
+              <div>
+                <h2 class="hero-title">Resumen de ${escapeHtml(platform.label)}</h2>
+                <div class="helper-text">Indicadores del canal seleccionado con foco en mensajes contestados, leads y operacion.</div>
+              </div>
+              <div class="hero-actions">
+                <div class="badge ${analytics.connected ? "ok" : "warn"}">${escapeHtml(analytics.connectionLabel)}</div>
+                <button id="summaryEditButton" class="button" type="button">Editar</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="summary-grid">
+            <div class="metric-card"><div class="metric-label">Mensajes contestados</div><div class="display metric-value">${analytics.messagesAnswered}</div></div>
+            <div class="metric-card"><div class="metric-label">Clientes potenciales</div><div class="display metric-value">${analytics.leads}</div></div>
+            <div class="metric-card"><div class="metric-label">Respuesta</div><div class="display metric-value">${analytics.responseRate}%</div></div>
+            <div class="metric-card"><div class="metric-label">${platform.id === "phone" ? "Flows activos" : "Flows"}</div><div class="display metric-value">${analytics.automationCount}</div></div>
+          </div>
+
+          <div class="summary-stack">
+            <div class="chart-grid">
+              ${renderBarChart("Mensajes contestados por canal", channelAnalytics.map((item) => ({ label: item.label, value: item.messagesAnswered })))}
+              ${renderBarChart("Clientes potenciales por canal", channelAnalytics.map((item) => ({ label: item.label, value: item.leads })))}
+              ${renderBarChart(`Embudo de ${platform.label}`, analytics.funnel)}
+              ${renderBarChart(`Salud operativa de ${platform.label}`, analytics.health, "%")}
+            </div>
+
+            <div class="chart-grid">
+              <div class="section-card">
+                <div class="chart-title">Cuentas conectadas</div>
+                ${renderSummaryAccounts(platform, accounts, analytics)}
+              </div>
+              <div class="section-card">
+                <div class="chart-title">${platform.id === "phone" ? "Automatizaciones del backend" : "Flows recientes"}</div>
+                ${renderSummaryAutomations(platform, accounts)}
+              </div>
+            </div>
+          </div>
+        `;
+
+        document.getElementById("summaryEditButton").addEventListener("click", () => {
+          state.isEditing = true;
+          renderApp();
+        });
+      }
+      function renderSummaryAccounts(platform, accounts, analytics) {
+        if (!accounts.length) {
+          return `<div class="empty-state"><div class="empty">No hay cuentas conectadas en ${escapeHtml(platform.label)}.</div></div>`;
+        }
+        return accounts.slice(0, 4).map((account) => `
+          <div class="list-card">
+            <div class="item-row">
+              <div>
+                <div class="item-title">${escapeHtml(account.name)}</div>
+                <div class="item-sub">${escapeHtml(account.handle || "Sin identificador")}</div>
+              </div>
+              <div class="badge ${analytics.connected ? "ok" : "warn"}">${escapeHtml(account.status === "connected" ? "Conectada" : "Pendiente")}</div>
+            </div>
+          </div>
+        `).join("");
+      }
+
+      function renderSummaryAutomations(platform, accounts) {
+        const items = platform.id === "phone"
+          ? (state.snapshot?.automations ?? []).map((item) => ({ title: item.name, subtitle: item.description || item.trigger_type || "Automation del backend", status: item.status || "active" }))
+          : state.channelSnapshot
+            ? (state.channelSnapshot.flows ?? []).filter((item) => item.channel === platform.id).map((item) => ({ title: item.name, subtitle: `${item.action_type} � ${item.objective}`, status: item.status || "active" }))
+            : accounts.flatMap((account) => (account.automations ?? []).map((item) => ({ title: item.name, subtitle: `${account.name} � ${item.description || "Secuencia local"}`, status: item.status || "active" })));
+
+        if (!items.length) {
+          return `<div class="empty-state"><div class="empty">Todavia no hay flows para este canal.</div></div>`;
+        }
+        return items.slice(0, 5).map((item) => `
+          <div class="list-card">
+            <div class="item-row">
+              <div>
+                <div class="item-title">${escapeHtml(item.title)}</div>
+                <div class="item-sub">${escapeHtml(item.subtitle)}</div>
+              </div>
+              <div class="badge ${item.status === "active" ? "ok" : "warn"}">${escapeHtml(item.status)}</div>
+            </div>
+          </div>
+        `).join("");
+      }
+
+      function renderAccounts() {
+        const platform = getSelectedPlatform();
+        const accounts = getAccountsForPlatform();
+        accountsTitle.textContent = `Cuentas de ${platform.label}`;
+        accountsSubtitle.textContent = platform.description;
+        accountsCount.textContent = String(accounts.length);
+        selectedPlatformBadge.textContent = platform.label;
+        selectedPlatformBadge.className = `badge info ${platform.tone}`;
+
+        accountsList.innerHTML = accounts.length
+          ? accounts.map((account) => `
+              <button class="account-button ${account.id === state.selectedAccountId ? "active" : ""}" data-account-id="${account.id}" type="button">
+                <div class="account-row">
+                  <div>
+                    <div class="account-label">${escapeHtml(account.name)}</div>
+                    <div class="account-sub">${escapeHtml(account.handle || "Sin identificador")}</div>
+                  </div>
+                  <div class="badge ${account.status === "connected" ? "ok" : "warn"}">${account.status === "connected" ? "Conectada" : "Pendiente"}</div>
+                </div>
+              </button>
+            `).join("")
+          : `<div class="empty-state"><div class="empty">No hay cuentas todavia. Agrega la primera desde el formulario.</div></div>`;
+
+        accountsList.querySelectorAll("[data-account-id]").forEach((button) => {
+          button.addEventListener("click", () => setAccount(button.dataset.accountId));
+        });
+      }
+
+      function renderDetail() {
+        const account = getSelectedAccount();
+        const platform = getSelectedPlatform();
+        if (!account) {
+          detailRoot.innerHTML = `<div class="section-card empty-state"><div class="empty">Selecciona o crea una cuenta para continuar.</div></div>`;
+          return;
+        }
+        if (platform.id === "phone") {
+          renderPhoneDetail(account);
+          return;
+        }
+        renderGenericDetail(account);
+      }
+
+      function renderGenericDetail(account) {
+        const platform = getSelectedPlatform();
+        const agents = state.channelSnapshot ? getChannelAgentsForAccount(account.id) : account.agents;
+        const flows = state.channelSnapshot ? getChannelFlowsForAccount(account.id) : account.automations;
+        const jobs = state.channelSnapshot ? getChannelJobsForAccount(account.id) : [];
+        const contacts = getGenericSnapshot().contacts ?? [];
+        const automations = getGenericSnapshot().automations ?? [];
+        const actionDefinitions = getChannelActions(platform.id);
+
+        detailRoot.innerHTML = `
+          <div class="hero-card">
+            <div class="section-row">
+              <div>
+                <h3 class="hero-title" style="font-size: 24px;">${escapeHtml(account.name)}</h3>
+                <div class="helper-text">${escapeHtml(account.handle || "Sin identificador")} � ${escapeHtml(platform.label)}</div>
+              </div>
+              <div class="badge ${account.status === "connected" ? "ok" : "warn"}">${account.status === "connected" ? "Conectado" : "No conectado"}</div>
+            </div>
+          </div>
+
+          <div class="summary-grid">
+            <div class="metric-card"><div class="metric-label">Agentes</div><div class="display metric-value">${agents.length}</div></div>
+            <div class="metric-card"><div class="metric-label">Flows</div><div class="display metric-value">${flows.length}</div></div>
+            <div class="metric-card"><div class="metric-label">Jobs</div><div class="display metric-value">${jobs.length}</div></div>
+            <div class="metric-card"><div class="metric-label">Acciones disponibles</div><div class="display metric-value">${actionDefinitions.length}</div></div>
+          </div>
+
+          <div class="chart-grid" style="margin-top: 14px;">
+            <div class="section-card">
+              <div class="item-title">Crear agente</div>
+              <form id="genericAgentForm">
+                <div class="field"><label for="genericAgentName">Nombre</label><input id="genericAgentName" name="name" placeholder="Asistente de ventas" /></div>
+                <div class="field"><label for="genericAgentObjective">Objetivo</label><input id="genericAgentObjective" name="objective" placeholder="Responder preguntas frecuentes y captar leads" /></div>
+                <div class="field"><label for="genericAgentPersona">Prompt de persona</label><textarea id="genericAgentPersona" name="personaPrompt" placeholder="Tono de marca, guion base y criterio de respuesta."></textarea></div>
+                <div class="section-actions"><button class="button" type="submit">Crear agente</button></div>
+              </form>
+            </div>
+            <div class="section-card">
+              <div class="item-title">Crear flow</div>
+              <form id="genericFlowForm">
+                <div class="field"><label for="genericFlowName">Nombre</label><input id="genericFlowName" name="name" placeholder="Publicacion del dia" /></div>
+                <div class="field"><label for="genericFlowObjective">Objetivo</label><input id="genericFlowObjective" name="objective" placeholder="Publicar y responder la pieza principal del canal" /></div>
+                <div class="field"><label for="genericFlowTrigger">Trigger</label><input id="genericFlowTrigger" name="triggerType" placeholder="manual, new_lead, schedule, reply_needed" /></div>
+                <div class="field"><label for="genericFlowAction">Accion</label><select id="genericFlowAction" name="actionType"></select></div>
+                <div class="field"><label for="genericFlowAgentId">Agente</label><select id="genericFlowAgentId" name="agentId"></select></div>
+                <div class="field"><label for="genericFlowAutomationId">Automation</label><select id="genericFlowAutomationId" name="automationId"></select></div>
+                <div class="field"><label for="genericFlowPrompt">Instrucciones</label><textarea id="genericFlowPrompt" name="promptTemplate" placeholder="Objetivo, copy base, tono y reglas del contenido."></textarea></div>
+                <div class="field"><label for="genericFlowConfig">Config JSON</label><textarea id="genericFlowConfig" name="actionConfig" placeholder='{"assetType":"video","destination":"feed"}'></textarea></div>
+                <div class="section-actions"><button class="button" type="submit">Crear flow</button></div>
+              </form>
+            </div>
+          </div>
+          <div class="chart-grid" style="margin-top: 14px;">
+            <div class="section-card">
+              <div class="item-title">Crear job</div>
+              <form id="genericJobForm">
+                <div class="field"><label for="genericJobTitle">Titulo</label><input id="genericJobTitle" name="title" placeholder="Publicacion semanal" /></div>
+                <div class="field"><label for="genericJobAgentId">Agente</label><select id="genericJobAgentId" name="agentId"></select></div>
+                <div class="field"><label for="genericJobFlowId">Flow</label><select id="genericJobFlowId" name="flowId"></select></div>
+                <div class="field"><label for="genericJobContactId">Contacto</label><select id="genericJobContactId" name="contactId"></select></div>
+                <div class="field"><label for="genericJobTarget">Target</label><input id="genericJobTarget" name="targetRef" placeholder="@usuario, email o destino" /></div>
+                <div class="field"><label for="genericJobPayload">Payload JSON</label><textarea id="genericJobPayload" name="payload" placeholder='{"caption":"Texto de prueba","assetUrl":"https://..."}'></textarea></div>
+                <div class="section-actions"><button class="button" type="submit">Crear job</button></div>
+              </form>
+            </div>
+            <div class="section-card">
+              <div class="chart-title">Acciones de ${escapeHtml(platform.label)}</div>
+              ${actionDefinitions.length
+                ? actionDefinitions.map((item) => `
+                    <div class="list-card">
+                      <div class="item-row">
+                        <div>
+                          <div class="item-title">${escapeHtml(item.label)}</div>
+                          <div class="item-sub">${escapeHtml(item.description)}</div>
+                        </div>
+                        <div class="badge info">${escapeHtml(item.content_type || item.action_type)}</div>
+                      </div>
+                    </div>
+                  `).join("")
+                : `<div class="empty-state"><div class="empty">No hay acciones definidas para este canal.</div></div>`}
+            </div>
+          </div>
+
+          <div class="chart-grid" style="margin-top: 14px;">
+            <div class="section-card">
+              <div class="chart-title">Agentes de la cuenta</div>
+              ${agents.length
+                ? agents.map((item) => `
+                    <div class="list-card">
+                      <div class="item-title">${escapeHtml(item.name)}</div>
+                      <div class="item-sub">${escapeHtml(item.objective || item.persona_prompt || "Sin objetivo")}</div>
+                    </div>
+                  `).join("")
+                : `<div class="empty-state"><div class="empty">Todavia no hay agentes para esta cuenta.</div></div>`}
+            </div>
+            <div class="section-card">
+              <div class="chart-title">Flows de la cuenta</div>
+              ${flows.length
+                ? flows.map((item) => `
+                    <div class="list-card">
+                      <div class="item-row">
+                        <div>
+                          <div class="item-title">${escapeHtml(item.name)}</div>
+                          <div class="item-sub">${escapeHtml(item.objective || item.description || "Sin descripcion")}</div>
+                        </div>
+                        <div class="badge ${item.status === "active" ? "ok" : "warn"}">${escapeHtml(item.action_type || item.status || "active")}</div>
+                      </div>
+                    </div>
+                  `).join("")
+                : `<div class="empty-state"><div class="empty">Todavia no hay flows para esta cuenta.</div></div>`}
+            </div>
+          </div>
+
+          <div class="section-card" style="margin-top: 14px;">
+            <div class="chart-title">Jobs de la cuenta</div>
+            ${jobs.length
+              ? jobs.map((item) => `
+                  <div class="list-card">
+                    <div class="item-row">
+                      <div>
+                        <div class="item-title">${escapeHtml(item.title)}</div>
+                        <div class="item-sub">${escapeHtml(item.target_ref || item.result_summary || "Sin destino")}</div>
+                      </div>
+                      <div class="badge ${item.status === "completed" ? "ok" : item.status === "failed" ? "warn" : "info"}">${escapeHtml(item.status)}</div>
+                    </div>
+                  </div>
+                `).join("")
+              : `<div class="empty-state"><div class="empty">Todavia no hay jobs para esta cuenta.</div></div>`}
+          </div>
+        `;
+
+        fillSelect(document.getElementById("genericFlowAgentId"), agents, "name", "Agente opcional");
+        fillSelect(document.getElementById("genericJobAgentId"), agents, "name", "Agente opcional");
+        fillSelect(document.getElementById("genericJobFlowId"), flows, "name", "Selecciona un flow");
+        fillSelect(document.getElementById("genericJobContactId"), contacts, "full_name", "Contacto opcional");
+        fillSelect(document.getElementById("genericFlowAutomationId"), automations, "name", "Automation opcional");
+        document.getElementById("genericFlowAction").innerHTML = [`<option value="">Selecciona una accion</option>`, ...actionDefinitions.map((item) => `<option value="${escapeHtml(item.action_type)}">${escapeHtml(item.label)}</option>`)].join("");
+
+        document.getElementById("genericAgentForm").addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const form = new FormData(event.currentTarget);
+          await postJson("/api/channels/agents", { accountId: account.id, channel: platform.id, name: form.get("name"), objective: form.get("objective"), personaPrompt: form.get("personaPrompt"), status: "active" });
+          await loadData("Agente creado.");
+        });
+
+        document.getElementById("genericFlowForm").addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const form = new FormData(event.currentTarget);
+          const selectedAction = actionDefinitions.find((item) => item.action_type === String(form.get("actionType") || ""));
+          await postJson("/api/channels/flows", {
+            accountId: account.id,
+            channel: platform.id,
+            agentId: form.get("agentId") || undefined,
+            automationId: form.get("automationId") || undefined,
+            name: form.get("name"),
+            objective: form.get("objective"),
+            triggerType: form.get("triggerType"),
+            actionType: form.get("actionType"),
+            contentType: selectedAction?.content_type,
+            promptTemplate: form.get("promptTemplate"),
+            actionConfig: parseJsonInput(form.get("actionConfig"), "Config JSON") || undefined,
+            status: "active"
+          });
+          await loadData("Flow creado.");
+        });
+
+        document.getElementById("genericJobForm").addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const form = new FormData(event.currentTarget);
+          await postJson("/api/channels/jobs", {
+            accountId: account.id,
+            channel: platform.id,
+            agentId: form.get("agentId") || undefined,
+            flowId: form.get("flowId"),
+            contactId: form.get("contactId") || undefined,
+            title: form.get("title"),
+            targetRef: form.get("targetRef"),
+            payload: parseJsonInput(form.get("payload"), "Payload JSON") || undefined
+          });
+          await loadData("Job creado.");
+        });
+      }
+
+      function renderPhoneDetail(account) {
+        const snapshot = state.snapshot;
+        detailRoot.innerHTML = `
+          <div class="hero-card">
+            <div class="section-row">
+              <div>
+                <h3 class="hero-title" style="font-size: 24px;">${escapeHtml(account.name)}</h3>
+                <div class="helper-text">${escapeHtml(account.handle || "Sin numero")} � Workspace de voz conectado al backend actual.</div>
+              </div>
+              <div class="badge ${snapshot?.configured ? "ok" : "warn"}">${snapshot?.configured ? "Conectado" : "No conectado"}</div>
+            </div>
+          </div>
+
+          <div class="summary-grid">
+            <div class="metric-card">
+              <div class="metric-label">Configuracion</div>
+              <div class="helper-text" style="margin-top: 6px;">Twilio y webhooks del canal telefono</div>
+              <div class="section-actions">
+                <button id="phoneConfigButton" class="soft-button" type="button">Configuracion</button>
+              </div>
+              <div class="badge ${snapshot?.configured ? "ok" : "warn"}">${snapshot?.configured ? "Conectado" : "No conectado"}</div>
+            </div>
+            <div class="metric-card"><div class="metric-label">Flows</div><div class="display metric-value">${snapshot?.flows?.length ?? 0}</div></div>
+            <div class="metric-card"><div class="metric-label">Call jobs</div><div class="display metric-value">${snapshot?.jobs?.length ?? 0}</div></div>
+            <div class="metric-card"><div class="metric-label">Mensajes contestados</div><div class="display metric-value">${(snapshot?.jobs ?? []).filter((item) => item.status === "completed" || item.status === "answered").length}</div></div>
+          </div>
+          <div class="chart-grid" style="margin-top: 14px;">
+            <div class="section-card">
+              <div class="item-title">Crear agente de voz</div>
+              <form id="agentForm">
+                <div class="field"><label for="agentName">Nombre</label><input id="agentName" name="name" placeholder="Collections bot" /></div>
+                <div class="field"><label for="fromNumber">From number</label><input id="fromNumber" name="fromNumber" placeholder="+15005550006" value="${escapeHtml(account.handle || "")}" /></div>
+                <div class="section-actions"><button class="button" type="submit">Guardar agente</button></div>
+              </form>
+            </div>
+            <div class="section-card">
+              <div class="item-title">Crear flow</div>
+              <form id="flowForm">
+                <div class="field"><label for="flowName">Nombre</label><input id="flowName" name="name" placeholder="Appointment confirmation" /></div>
+                <div class="field"><label for="flowObjective">Objetivo</label><input id="flowObjective" name="objective" placeholder="Confirmar la cita de manana" /></div>
+                <div class="field"><label for="flowPrompt">Prompt</label><textarea id="flowPrompt" name="promptTemplate" placeholder="Presiona 1 para confirmar, 2 para callback, 3 para cancelar"></textarea></div>
+                <div class="field"><label for="flowAutomationId">Automation</label><select id="flowAutomationId" name="automationId"></select></div>
+                <div class="section-actions"><button class="button" type="submit">Guardar flow</button></div>
+              </form>
+            </div>
+          </div>
+
+          <div class="chart-grid" style="margin-top: 14px;">
+            <div class="section-card">
+              <div class="item-title">Trigger test call</div>
+              <form id="jobForm">
+                <div class="field"><label for="jobAgentId">Agent</label><select id="jobAgentId" name="agentId"></select></div>
+                <div class="field"><label for="jobFlowId">Flow</label><select id="jobFlowId" name="flowId"></select></div>
+                <div class="field"><label for="jobContactId">Contacto</label><select id="jobContactId" name="contactId"></select></div>
+                <div class="field"><label for="jobToNumber">Numero destino</label><input id="jobToNumber" name="toNumber" placeholder="+5215512345678" /></div>
+                <div class="section-actions"><button class="button" type="submit" ${snapshot?.configured ? "" : "disabled"}>Crear call job</button></div>
+              </form>
+            </div>
+            <div class="section-card">
+              <div class="chart-title">Salud del canal telefono</div>
+              ${renderBarChart("Operacion actual", getPlatformAnalytics(getSelectedPlatform(), getAccountsForPlatform(), snapshot).health, "%")}
+            </div>
+          </div>
+
+          <div class="chart-grid" style="margin-top: 14px;">
+            <div class="section-card"><div class="chart-title">Recent call jobs</div><div id="jobsList" class="list-grid"></div></div>
+            <div class="section-card"><div class="chart-title">Active call flows</div><div id="flowsList" class="list-grid"></div></div>
+          </div>
+        `;
+
+        const agentForm = document.getElementById("agentForm");
+        const flowForm = document.getElementById("flowForm");
+        const jobForm = document.getElementById("jobForm");
+        const jobsList = document.getElementById("jobsList");
+        const flowsList = document.getElementById("flowsList");
+        const jobContactId = document.getElementById("jobContactId");
+        const jobToNumber = document.getElementById("jobToNumber");
+        const phoneConfigButton = document.getElementById("phoneConfigButton");
+
+        fillSelect(document.getElementById("flowAutomationId"), snapshot?.automations ?? [], "name", "Selecciona una automation");
+        fillSelect(document.getElementById("jobAgentId"), snapshot?.agents ?? [], "name", "Selecciona un agent");
+        fillSelect(document.getElementById("jobFlowId"), snapshot?.flows ?? [], "name", "Selecciona un flow");
+        fillSelect(document.getElementById("jobContactId"), snapshot?.contacts ?? [], "full_name", "Contacto opcional");
+
+        phoneConfigButton.addEventListener("click", () => {
+          setStatus(snapshot?.configured ? "Twilio esta conectado para esta cuenta." : "Falta configurar TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN o TWILIO_WEBHOOK_BASE_URL.", !snapshot?.configured, Boolean(snapshot?.configured));
+        });
+
+        jobContactId.addEventListener("change", (event) => {
+          const contact = (snapshot?.contacts ?? []).find((item) => item.id === event.target.value);
+          if (contact?.phone) jobToNumber.value = contact.phone;
+        });
+
+        jobsList.innerHTML = snapshot?.jobs?.length
+          ? snapshot.jobs.map((job) => `
+              <div class="list-card">
+                <div class="item-row">
+                  <div>
+                    <div class="item-title">${escapeHtml(job.contact?.full_name || job.to_number)}</div>
+                    <div class="item-sub">${escapeHtml(job.flow?.name || job.flow_id)} � ${escapeHtml(job.agent?.name || job.agent_id)}</div>
+                  </div>
+                  <div class="badge ${job.status === "completed" ? "ok" : "warn"}">${escapeHtml(job.status)}</div>
+                </div>
+                <div class="helper-text" style="margin-top: 10px;">Outcome ${escapeHtml(job.outcome || "pending")} � ${escapeHtml(job.to_number)}</div>
+              </div>
+            `).join("")
+          : `<div class="empty-state"><div class="empty">No hay call jobs todavia.</div></div>`;
+
+        flowsList.innerHTML = snapshot?.flows?.length
+          ? snapshot.flows.map((flow) => `
+              <div class="list-card">
+                <div class="item-row">
+                  <div>
+                    <div class="item-title">${escapeHtml(flow.name)}</div>
+                    <div class="item-sub">${escapeHtml(flow.objective)}</div>
+                  </div>
+                  <div class="badge ${flow.status === "active" ? "ok" : "warn"}">${escapeHtml(flow.status)}</div>
+                </div>
+                <div class="helper-text" style="margin-top: 10px;">${escapeHtml(flow.prompt_template)}</div>
+              </div>
+            `).join("")
+          : `<div class="empty-state"><div class="empty">No hay flows activos todavia.</div></div>`;
+
+        agentForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const form = new FormData(agentForm);
+          await postJson("/api/voice/agents", { name: form.get("name"), fromNumber: form.get("fromNumber") });
+          await loadData("Agente de voz creado.");
+        });
+
+        flowForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const form = new FormData(flowForm);
+          await postJson("/api/voice/flows", { name: form.get("name"), objective: form.get("objective"), promptTemplate: form.get("promptTemplate"), automationId: form.get("automationId") || undefined, status: "active" });
+          await loadData("Flow creado.");
+        });
+
+        jobForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const form = new FormData(jobForm);
+          await postJson("/api/voice/jobs", { agentId: form.get("agentId"), flowId: form.get("flowId"), contactId: form.get("contactId") || undefined, toNumber: form.get("toNumber") });
+          await loadData("Call job creado.");
+        });
+      }
+
+      async function postJson(url, payload) {
+        setStatus("Enviando solicitud...", false);
+        const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        const data = await safeJson(response);
+        if (!response.ok) throw new Error(data?.error || "No se pudo completar la accion.");
+      }
+
+      async function loadData(message) {
+        try {
+          setStatus(message || "Cargando datos del backend...", false);
+          const [voiceResponse, channelsResponse] = await Promise.all([fetch("/api/voice"), fetch("/api/channels")]);
+          const voiceData = await safeJson(voiceResponse);
+          const channelsData = await safeJson(channelsResponse);
+          if (!voiceResponse.ok) throw new Error(voiceData?.error || "No se pudo cargar voice.");
+          if (!channelsResponse.ok) throw new Error(channelsData?.error || "No se pudo cargar canales.");
+          state.snapshot = voiceData;
+          state.channelSnapshot = channelsData;
+          syncAccountsFromChannels();
+          renderApp();
+          setStatus(message || "Backend sincronizado.", false, true);
+        } catch (error) {
+          state.snapshot = null;
+          state.channelSnapshot = null;
+          renderApp();
+          setStatus(error.message || "No se pudo cargar el backend.", true);
+        }
+      }
+
+      function fillSelect(element, items, labelField, placeholder) {
+        element.innerHTML = [`<option value="">${escapeHtml(placeholder)}</option>`, ...items.map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item[labelField] || item.name || "Untitled")}</option>`)].join("");
+      }
+
+      async function safeJson(response) {
+        try { return await response.json(); } catch { return null; }
+      }
+
+      function setStatus(message, isError, isOk) {
+        statusLine.textContent = message;
+        statusLine.className = `status-line ${isError ? "error" : isOk ? "ok" : ""}`.trim();
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
+      }
+
+      ensureSelection();
+      renderApp();
+      loadData();
+
+      refreshButton.addEventListener("click", () => loadData("Datos actualizados."));
+      backButton.addEventListener("click", () => {
+        state.isEditing = false;
+        renderApp();
+      });
+
+      addAccountForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const form = new FormData(addAccountForm);
+        const name = String(form.get("name") || "").trim();
+        const handle = String(form.get("handle") || "").trim();
+        if (!name) {
+          setStatus("El nombre de la cuenta es obligatorio.", true);
+          return;
+        }
+
+        if (state.selectedPlatformId === "phone") {
+          const account = seedAccount(state.selectedPlatformId, name, handle || "Sin identificador");
+          state.accounts.push(account);
+          persistAccounts();
+          state.selectedAccountId = account.id;
+          addAccountForm.reset();
+          renderApp();
+          setStatus(`Cuenta ${name} agregada en ${getSelectedPlatform().label}.`, false, true);
+          return;
+        }
+
+        await postJson("/api/channels/accounts", { channel: state.selectedPlatformId, name, handle: handle || undefined, status: "connected" });
+        addAccountForm.reset();
+        await loadData(`Cuenta ${name} agregada en ${getSelectedPlatform().label}.`);
+      });
+    </script>
+  </body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

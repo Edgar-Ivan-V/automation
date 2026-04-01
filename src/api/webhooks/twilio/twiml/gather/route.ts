@@ -1,6 +1,6 @@
 // POST /api/webhooks/twilio/voice/twiml/gather?jobId=<uuid>
 // Twilio posts here with the digit the caller pressed.
-import { completeCallJobFromGather, verifyTwilioSignature } from "../../../../modules/voice";
+import { completeCallJobFromGather, verifyTwilioSignature } from "../../../../../modules/voice/index.js";
 
 export async function handleGather(
   jobId: string,

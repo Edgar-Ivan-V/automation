@@ -10,16 +10,16 @@ import {
   listCallFlowsRepository,
   listCallJobsRepository,
   updateCallJobRepository
-} from "./repositories";
+} from "./repositories.js";
 import {
   buildAbsoluteWebhookUrl,
   createTwilioCall,
   getTwilioConfig,
   isTwilioConfigured
-} from "./twilio";
-import { requireServiceSupabaseClient } from "../shared/supabase-client";
-import { NotFoundError, ValidationError } from "../shared/errors";
-import { optionalString, requireNonEmptyString, requireNumber } from "../shared/validation";
+} from "./twilio.js";
+import { requireServiceSupabaseClient } from "../shared/supabase-client.js";
+import { NotFoundError, ValidationError } from "../shared/errors.js";
+import { optionalString, requireNonEmptyString, requireNumber } from "../shared/validation.js";
 import type {
   CallAgent,
   CallFlow,
@@ -30,7 +30,7 @@ import type {
   VoiceBotStatus,
   VoiceCallStatus,
   VoiceOutcome
-} from "./types";
+} from "./types.js";
 
 const botStatuses = new Set<VoiceBotStatus>(["draft", "active", "paused"]);
 
@@ -326,7 +326,7 @@ export async function getVoiceAutomationSnapshot(organizationId: string) {
     listCallFlowsRepository(client, normalizedOrganizationId),
     listCallJobsRepository(client, normalizedOrganizationId),
     client.from("contacts").select("id, full_name, phone, company").eq("organization_id", normalizedOrganizationId).order("full_name", { ascending: true }).limit(100),
-    client.from("automations").select("id, name, trigger_type, action_type, status").eq("organization_id", normalizedOrganizationId).order("updated_at", { ascending: false }).limit(50)
+    client.from("automations").select("id, name, description, trigger_type, action_type, status").eq("organization_id", normalizedOrganizationId).order("updated_at", { ascending: false }).limit(50)
   ]);
 
   if (contacts.error) throw new Error(contacts.error.message);

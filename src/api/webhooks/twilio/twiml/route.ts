@@ -1,6 +1,7 @@
 // POST /api/webhooks/twilio/voice/twiml?jobId=<uuid>
 // Twilio fetches this to get the TwiML script for the call.
-import { requireServiceSupabaseClient, verifyTwilioSignature } from "../../../modules/shared";
+import { requireServiceSupabaseClient } from "../../../../modules/shared/index.js";
+import { verifyTwilioSignature } from "../../../../modules/voice/index.js";
 
 function escapeXml(value: string) {
   return value

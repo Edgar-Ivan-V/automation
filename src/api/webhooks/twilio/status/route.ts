@@ -1,7 +1,7 @@
 // POST /api/webhooks/twilio/voice/status
 // Twilio calls this endpoint to report call status changes.
 // Verify the X-Twilio-Signature header before processing.
-import { handleTwilioCallStatus, verifyTwilioSignature } from "../../../modules/voice";
+import { handleTwilioCallStatus, verifyTwilioSignature } from "../../../../modules/voice/index.js";
 
 export async function handleStatusWebhook(
   requestUrl: string,

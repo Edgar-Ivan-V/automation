@@ -14,7 +14,7 @@
  *   - description: explicación breve de la acción
  *
  * Canales y sus acciones:
- *   - automations: workflow_run, lead_routing, crm_update
+ *   - customer_support: answer_chat, suggest_article, capture_ticket, send_media, handoff_agent
  *   - email: send_email, send_sequence, tag_contact
  *   - facebook: reply_comment, reply_dm, publish_post, capture_lead
  *   - instagram: publish_post, publish_story, publish_reel, reply_dm
@@ -34,7 +34,7 @@ import type {
 } from "./types.js";
 
 export const SUPPORTED_CHANNELS: ChannelKind[] = [
-  "automations",
+  "customer_support",
   "email",
   "facebook",
   "instagram",
@@ -45,10 +45,12 @@ export const SUPPORTED_CHANNELS: ChannelKind[] = [
 ];
 
 export const CHANNEL_ACTIONS: Record<ChannelKind, ChannelActionDefinition[]> = {
-  automations: [
-    { action_type: "workflow_run", label: "Run workflow", description: "Executes a generic workflow or business process." },
-    { action_type: "lead_routing", label: "Route lead", description: "Assigns a lead to an internal owner or queue." },
-    { action_type: "crm_update", label: "Update CRM", description: "Updates a CRM record or pipeline stage." }
+  customer_support: [
+    { action_type: "answer_chat", label: "Answer website chat", content_type: "message", description: "Replies to a website support or sales conversation." },
+    { action_type: "suggest_article", label: "Suggest knowledge article", content_type: "article", description: "Shares a help article or FAQ with the visitor." },
+    { action_type: "capture_ticket", label: "Create support ticket", content_type: "ticket", description: "Creates a ticket or follow-up case for the support team." },
+    { action_type: "send_media", label: "Send image or video", content_type: "media", description: "Sends an image or video inside the website chat." },
+    { action_type: "handoff_agent", label: "Handoff human", description: "Escalates the website chat to a human support or sales operator." }
   ],
   email: [
     { action_type: "send_email", label: "Send email", content_type: "email", description: "Sends a one-off email message." },
@@ -101,11 +103,12 @@ export const CHANNEL_ACTIONS: Record<ChannelKind, ChannelActionDefinition[]> = {
 };
 
 export const CHANNEL_TRIGGERS: Record<ChannelKind, ChannelTriggerDefinition[]> = {
-  automations: [
-    { trigger_type: "manual", label: "Manual", description: "Run the workflow from the operator panel." },
-    { trigger_type: "scheduled_run", label: "Scheduled run", description: "Runs on a schedule." },
-    { trigger_type: "crm_stage_changed", label: "CRM stage changed", description: "Runs when a record changes stage." },
-    { trigger_type: "webhook_event", label: "Webhook event", description: "Runs when an external webhook arrives." },
+  customer_support: [
+    { trigger_type: "manual", label: "Manual", description: "Launch the assistant manually from the operator panel." },
+    { trigger_type: "new_website_message", label: "New website message", description: "Runs when a new website chat message arrives." },
+    { trigger_type: "returning_visitor", label: "Returning visitor", description: "Runs when a returning visitor reopens the conversation." },
+    { trigger_type: "escalation_requested", label: "Escalation requested", description: "Runs when the assistant should escalate to a human." },
+    { trigger_type: "knowledge_gap", label: "Knowledge gap", description: "Runs when the assistant cannot answer from the current support playbook." },
   ],
   email: [
     { trigger_type: "manual", label: "Manual", description: "Launch the email flow manually." },
@@ -157,7 +160,7 @@ export const CHANNEL_AGENT_TYPES: ChannelAgentTypeDefinition[] = [
     agent_type: "dm_responder",
     label: "Responder DMs",
     description: "Agente para inbox privado, seguimiento y atención uno a uno.",
-    allowed_action_types: ["reply_dm", "reply_message", "send_message", "send_dm", "send_template", "send_media"],
+    allowed_action_types: ["reply_dm", "reply_message", "send_message", "send_dm", "send_template", "send_media", "answer_chat", "suggest_article", "capture_ticket", "handoff_agent"],
     config_fields: [
       {
         key: "responseStyle",

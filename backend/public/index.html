@@ -126,7 +126,7 @@
       .badge.ok { background: var(--green-soft); color: var(--green); }
       .badge.warn { background: var(--amber-soft); color: var(--amber); }
       .badge.local { background: var(--violet-soft); color: var(--violet); }
-      .tone-automations { background: #e0f2fe; color: #0369a1; }
+      .tone-customer-support { background: #e0f2fe; color: #0369a1; }
       .tone-email { background: #dbeafe; color: #1d4ed8; }
       .tone-facebook { background: #dbeafe; color: #1d4ed8; }
       .tone-instagram { background: #fae8ff; color: #a21caf; }
@@ -666,9 +666,9 @@
     </main>
 
     <script>
-      const STORAGE_KEY = "automation.channelAccounts.v5";
+      const STORAGE_KEY = "automation.channelAccounts.v6";
       const PLATFORMS = [
-        { id: "automations", label: "Automatizaciones", short: "AU", tone: "tone-automations", description: "Borradores y estructuras de automatizacion por cuenta." },
+        { id: "customer_support", label: "Servicio al cliente", short: "CS", tone: "tone-customer-support", description: "Asistente web para soporte, ventas y atención al cliente desde una página." },
         { id: "email", label: "Email", short: "EM", tone: "tone-email", description: "Bandejas, remitentes y secuencias de correo." },
         { id: "facebook", label: "Facebook", short: "FB", tone: "tone-facebook", description: "Paginas y activos de Facebook conectados." },
         { id: "instagram", label: "Instagram", short: "IG", tone: "tone-instagram", description: "Perfiles, fotos, historias y reels." },
@@ -698,7 +698,7 @@
       }
 
       const DEFAULT_ACCOUNTS = [
-        seedAccount("automations", "Workspace general", "automation-hub"),
+        seedAccount("customer_support", "Soporte web principal", "support.tudominio.com"),
         seedAccount("email", "Ventas", "ventas@agencyhub.mx"),
         seedAccount("facebook", "Agency Hub Page", "facebook.com/agencyhub"),
         seedAccount("instagram", "Agency Hub", "@agencyhub"),
@@ -731,7 +731,7 @@
         snapshot: null,
         channelSnapshot: null,
         accounts: loadAccounts(),
-        selectedPlatformId: "automations",
+        selectedPlatformId: "customer_support",
         selectedAccountId: null,
         isEditing: false
       };
@@ -1394,13 +1394,13 @@
               { label: "Impresiones", value: sumJobMetric(jobs, "impressions") }
             ]);
           }
-          case "automations": {
-            const section = getChannelSummarySection(platform.id, "workflow_ops");
+          case "customer_support": {
+            const section = getChannelSummarySection(platform.id, "customer_support_ops");
             return renderMetricCardGrid([
-              { label: "Workflow runs", value: getSectionItemValue(section, "workflow_runs") },
-              { label: "Lead routing", value: getSectionItemValue(section, "lead_routing") },
-              { label: "CRM updates", value: getSectionItemValue(section, "crm_updates") },
-              { label: "Downstream tasks", value: sumJobMetric(jobs, "downstreamTasks") }
+              { label: "Chats", value: getSectionItemValue(section, "chats_answered") },
+              { label: "Artículos", value: getSectionItemValue(section, "articles_suggested") },
+              { label: "Tickets", value: getSectionItemValue(section, "tickets_created") },
+              { label: "Handoffs", value: getSectionItemValue(section, "handoffs") }
             ]);
           }
           case "phone": {
@@ -1621,35 +1621,38 @@
         `;
       }
 
-      function renderAutomationsSummarySection(platform) {
+      function renderCustomerSupportSummarySection(platform) {
         const jobs = getChannelJobsForPlatform(platform.id);
-        const section = getChannelSummarySection(platform.id, "workflow_ops");
-        const workflowJobs = jobs.filter((item) => getJobActionType(item) === "workflow_run");
-        const routingJobs = jobs.filter((item) => getJobActionType(item) === "lead_routing");
-        const crmJobs = jobs.filter((item) => getJobActionType(item) === "crm_update");
+        const section = getChannelSummarySection(platform.id, "customer_support_ops");
+        const chatJobs = jobs.filter((item) => getJobActionType(item) === "answer_chat");
+        const articleJobs = jobs.filter((item) => getJobActionType(item) === "suggest_article");
+        const ticketJobs = jobs.filter((item) => getJobActionType(item) === "capture_ticket");
+        const mediaJobs = jobs.filter((item) => getJobActionType(item) === "send_media");
+        const handoffJobs = jobs.filter((item) => getJobActionType(item) === "handoff_agent");
         return `
           <div class="channel-experience">
             <div class="split-grid">
-              ${renderSectionAsDonut(section, "Distribucion del orchestration layer")}
+              ${renderSectionAsDonut(section, "Mix entre respuesta, conocimiento y escalado")}
               <div class="spotlight-card">
-                <div class="chart-title">Capa de orquestación</div>
-                <div class="spotlight-subtitle">Automations no es un inbox ni un content feed. Aquí importan procesos, rutas y efectos downstream.</div>
+                <div class="chart-title">Asistente de soporte web</div>
+                <div class="spotlight-subtitle">Este canal vive como un asistente dentro de una página: responde chats, sugiere ayuda, crea tickets y escala a humano cuando hace falta.</div>
                 ${renderMetricPillGrid([
-                  { label: "Workflow runs", value: workflowJobs.length, subtitle: "Ejecuciones directas de procesos internos." },
-                  { label: "Lead routing", value: routingJobs.length, subtitle: "Casos enviados a owners, equipos o colas." },
-                  { label: "CRM updates", value: crmJobs.length, subtitle: "Sincronizaciones o cambios de etapa." },
-                  { label: "Downstream tasks", value: sumJobMetric(jobs, "downstreamTasks"), subtitle: "Tareas generadas como efecto colateral." }
+                  { label: "Chats answered", value: chatJobs.length, subtitle: "Conversaciones respondidas desde el widget web." },
+                  { label: "Articles", value: articleJobs.length, subtitle: "Artículos o FAQs compartidos como ayuda contextual." },
+                  { label: "Tickets", value: ticketJobs.length, subtitle: "Casos creados para seguimiento humano." },
+                  { label: "Media", value: mediaJobs.length, subtitle: "Imágenes o videos enviados dentro del chat." },
+                  { label: "Handoffs", value: handoffJobs.length, subtitle: "Escalados a soporte o ventas humanas." }
                 ])}
               </div>
             </div>
             ${renderTimelineStack(
               jobs.slice(0, 4).map((job) => ({
-                label: getJobActionType(job) || "workflow",
-                title: job.title || "Automation job",
-                subtitle: job.result_summary || "Proceso interno ejecutado desde el orchestration layer.",
+                label: getJobActionType(job) || "chat",
+                title: job.title || "Interacción de soporte",
+                subtitle: job.result_summary || "Evento del asistente web ejecutado en modo preview.",
                 kpis: [`estado ${job.status || "queued"}`, `resultado ${job.outcome || "n/a"}`]
               })),
-              "Todavia no hay jobs internos recientes."
+              "Todavia no hay actividad reciente del asistente web."
             )}
           </div>
         `;
@@ -1963,8 +1966,8 @@
 
       function renderChannelSpecificSummary(platform) {
         switch (platform.id) {
-          case "automations":
-            return renderAutomationsSummarySection(platform);
+          case "customer_support":
+            return renderCustomerSupportSummarySection(platform);
           case "facebook":
             return renderFacebookSummarySection(platform);
           case "instagram":
@@ -2019,7 +2022,14 @@
         const definition = getAgentTypeDefinition(platformId, agentType);
         if (!definition) return `<div class="empty-state"><div class="empty">Selecciona un tipo de agente para ver su subagente operativo.</div></div>`;
         const action = getChannelActions(platformId).find((item) => item.action_type === actionType);
-        const fieldSets = {
+        const fieldSets = platformId === "customer_support" ? {
+          dm_responder: [
+            { key: "serviceLevel", label: "Tiempo objetivo", options: [["instant", "Inmediato"], ["under_minute", "Menos de 1 minuto"], ["under_five_minutes", "Menos de 5 minutos"]] },
+            { key: "handoffMode", label: "Escalado", options: [["qualify_then_handoff", "Escalar cuando no pueda resolver"], ["resolve_if_simple", "Resolver si es simple"], ["handoff_immediately", "Escalar de inmediato"]] },
+            { key: "conversationGoal", label: "Meta del asistente", options: [["resolve_support", "Resolver soporte"], ["capture_lead", "Captar lead"], ["book_call", "Agendar llamada"]] },
+            { key: "mediaMode", label: "Ayuda visual", options: [["none", "Sin media"], ["image_only", "Solo imagen"], ["video_only", "Solo video"], ["image_or_video", "Imagen o video"]] }
+          ]
+        } : {
           dm_responder: [
             { key: "serviceLevel", label: "Velocidad de respuesta", options: [["instant", "Inmediata"], ["same_shift", "Durante el turno"], ["same_day", "Mismo dia"]] },
             { key: "handoffMode", label: "Escalado", options: [["qualify_then_handoff", "Calificar y escalar"], ["resolve_if_simple", "Resolver si es simple"], ["handoff_immediately", "Escalar de inmediato"]] },
@@ -2153,6 +2163,7 @@
         const flowByAgentId = new Map(flows.filter((item) => item.agent_id).map((item) => [item.agent_id, item]));
         const triggerLabelById = Object.fromEntries(triggerDefinitions.map((item) => [item.trigger_type, item.label]));
         const actionLabelById = Object.fromEntries(actionDefinitions.map((item) => [item.action_type, item.label]));
+        const isCustomerSupport = platform.id === "customer_support";
 
         detailRoot.innerHTML = `
           <div class="hero-card">
@@ -2174,21 +2185,21 @@
 
           <div class="chart-grid" style="margin-top: 14px;">
             <div class="section-card">
-              <div class="item-title">Personalizar agente</div>
-              <div class="helper-text" style="margin-bottom: 14px;">Aqui defines el agente y su subagente operativo. Ya no necesitas crear flows ni jobs manualmente.</div>
+              <div class="item-title">${isCustomerSupport ? "Configurar asistente web" : "Personalizar agente"}</div>
+              <div class="helper-text" style="margin-bottom: 14px;">${isCustomerSupport ? "Configura el asistente de tu página: cómo responde, cuándo escala y qué tipo de ayuda comparte." : "Aqui defines el agente y su subagente operativo. Ya no necesitas crear flows ni jobs manualmente."}</div>
               <form id="genericAgentSetupForm">
-                <div class="field"><label for="genericAgentName">Nombre del agente</label><input id="genericAgentName" name="name" placeholder="Agente de Instagram MX" /></div>
+                <div class="field"><label for="genericAgentName">Nombre del agente</label><input id="genericAgentName" name="name" placeholder="${isCustomerSupport ? "Asistente de soporte web" : "Agente de Instagram MX"}" /></div>
                 <div class="field"><label for="genericAgentType">Tipo de agente</label><select id="genericAgentType" name="agentType"></select></div>
-                <div class="field"><label for="genericAgentObjective">Objetivo</label><input id="genericAgentObjective" name="objective" placeholder="Responder preguntas frecuentes y captar leads" /></div>
+                <div class="field"><label for="genericAgentObjective">Objetivo</label><input id="genericAgentObjective" name="objective" placeholder="${isCustomerSupport ? "Resolver dudas de soporte y escalar cuando haga falta" : "Responder preguntas frecuentes y captar leads"}" /></div>
                 <div id="genericAgentConfigFields"></div>
                 <div class="field"><label for="genericFlowTrigger">Activacion</label><select id="genericFlowTrigger" name="triggerType"></select></div>
                 <div class="field"><label for="genericFlowAction">Accion principal</label><select id="genericFlowAction" name="actionType"></select></div>
-                <div class="field"><label for="genericFlowPrompt">Guion base</label><textarea id="genericFlowPrompt" name="promptTemplate" placeholder="Define el copy, tono y reglas del agente para esta rutina."></textarea></div>
-                <div class="section-actions"><button class="button" type="submit">Guardar agente y subagente</button></div>
+                <div class="field"><label for="genericFlowPrompt">${isCustomerSupport ? "Guion de atención" : "Guion base"}</label><textarea id="genericFlowPrompt" name="promptTemplate" placeholder="${isCustomerSupport ? "Define cómo saluda, cómo resuelve, cuándo ofrece artículos y cuándo debe escalar." : "Define el copy, tono y reglas del agente para esta rutina."}"></textarea></div>
+                <div class="section-actions"><button class="button" type="submit">${isCustomerSupport ? "Guardar asistente" : "Guardar agente y subagente"}</button></div>
               </form>
             </div>
             <div class="section-card">
-              <div class="chart-title">Subagentes operativos</div>
+              <div class="chart-title">${isCustomerSupport ? "Rutinas del asistente" : "Subagentes operativos"}</div>
               <div id="genericSubagentConfigFields" style="margin-bottom: 16px;"></div>
               ${flows.length
                 ? flows.map((item) => `

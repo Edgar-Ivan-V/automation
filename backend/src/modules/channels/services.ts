@@ -81,10 +81,19 @@ const accountStatuses = new Set<ChannelAccountStatus>(["draft", "connected", "di
 const botStatuses = new Set<ChannelBotStatus>(["draft", "active", "paused"]);
 const jobStatuses = new Set<ChannelJobStatus>(["draft", "queued", "scheduled", "running", "completed", "failed", "canceled", "requires_auth"]);
 
+function normalizeStoredChannel(value: unknown): ChannelKind {
+  if (value === "automations") return "customer_support";
+  if (typeof value !== "string" || !isSupportedChannel(value)) {
+    throw new ValidationError("channel is invalid.");
+  }
+  return value;
+}
+
 function parseChannel(value: unknown, field = "channel"): ChannelKind {
   const channel = requireNonEmptyString(value, field);
+  if (channel === "automations") return "customer_support";
   if (!isSupportedChannel(channel)) throw new ValidationError(`${field} is invalid.`);
-  return channel;
+  return channel as ChannelKind;
 }
 
 function parseAccountStatus(value: unknown) {
@@ -190,6 +199,46 @@ function buildPreviewResultPayload(channel: ChannelKind, actionType: string, job
   } satisfies Record<string, unknown>;
 
   switch (channel) {
+    case "customer_support":
+      if (actionType === "answer_chat") {
+        return {
+          ...base,
+          conversation: { lane: "website_chat", status: "answered_preview", handoffRecommended: false },
+          visitor: { source: "website_widget", sessionStatus: "active" },
+          metrics: { firstResponseSeconds: 18, repliesSent: 1, satisfactionScore: 89 },
+        };
+      }
+      if (actionType === "suggest_article") {
+        return {
+          ...base,
+          knowledge: { articleStatus: "suggested_preview", articlesSuggested: 1 },
+          conversation: { lane: "website_chat", status: "article_shared_preview" },
+          metrics: { clicks: 1, articleViews: 1, deflectionRate: 63 },
+        };
+      }
+      if (actionType === "capture_ticket") {
+        return {
+          ...base,
+          ticket: { status: "created_preview", priority: "normal", queue: "support" },
+          metrics: { ticketsCreated: 1, slaHours: 4 },
+        };
+      }
+      if (actionType === "send_media") {
+        return {
+          ...base,
+          asset: { format: "media", status: "sent_preview", uploadedAssets: 1 },
+          conversation: { lane: "website_chat", status: "media_sent_preview" },
+          metrics: { views: 1, clicks: 2, repliesSent: 1 },
+        };
+      }
+      if (actionType === "handoff_agent") {
+        return {
+          ...base,
+          conversation: { lane: "website_chat", status: "escalated_preview" },
+          metrics: { handoffs: 1, waitMinutes: 3 },
+        };
+      }
+      break;
     case "instagram":
       if (actionType === "send_media") {
         return {
@@ -415,12 +464,6 @@ function buildPreviewResultPayload(channel: ChannelKind, actionType: string, job
         conversation: { lane: actionType === "reply_comment" ? "comment" : "inbox", status: "executed_preview" },
         metrics: { repliesSent: 1, openThreads: 2, handoffs: actionType === "handoff_agent" ? 1 : 0 },
       };
-    case "automations":
-      return {
-        ...base,
-        workflow: { status: "executed_preview", actionType },
-        metrics: { downstreamTasks: 3, retriesAvailable: 1 },
-      };
   }
 
   return base;
@@ -431,6 +474,10 @@ function buildExecutionPreview(actionType: string) {
   if (actionType.startsWith("send")) return { outcome: "sent", summary: "Preview generated locally. Connect the provider to deliver the message for real." } as const;
   if (actionType.startsWith("reply")) return { outcome: "replied", summary: "Preview generated locally. Connect the platform inbox provider to reply for real." } as const;
   if (actionType.includes("lead")) return { outcome: "lead_captured", summary: "Lead handling simulated locally. Connect CRM or provider to complete the flow." } as const;
+  if (actionType === "answer_chat") return { outcome: "replied", summary: "Preview generated locally. Connect the website chat provider to answer for real." } as const;
+  if (actionType === "suggest_article") return { outcome: "sent", summary: "Preview generated locally. Connect the website assistant provider to share knowledge for real." } as const;
+  if (actionType === "capture_ticket") return { outcome: "manual_review", summary: "Ticket capture simulated locally. Connect helpdesk or CRM to create the case for real." } as const;
+  if (actionType === "handoff_agent") return { outcome: "manual_review", summary: "Handoff simulated locally. Connect the operator inbox to escalate for real." } as const;
   return { outcome: "unknown", summary: "Execution completed in preview mode. External provider is still pending." } as const;
 }
 
@@ -588,17 +635,19 @@ function buildChannelSummary(channel: ChannelKind, input: {
         },
       ];
       break;
-    case "automations":
+    case "customer_support":
       sections = [
         executionSection,
         {
-          key: "workflow_ops",
-          title: "Automation workflows",
-          description: "Internal orchestration work across the system.",
+          key: "customer_support_ops",
+          title: "Website support assistant",
+          description: "Website chat coverage, knowledge help and human escalation.",
           items: [
-            { key: "workflow_runs", label: "Workflow runs", value: countJobsByAction(jobs, "workflow_run"), description: "Generic workflow executions." },
-            { key: "lead_routing", label: "Lead routing", value: countJobsByAction(jobs, "lead_routing"), description: "Routing jobs executed." },
-            { key: "crm_updates", label: "CRM updates", value: countJobsByAction(jobs, "crm_update"), description: "CRM sync jobs executed." },
+            { key: "chats_answered", label: "Chats answered", value: countJobsByAction(jobs, "answer_chat"), description: "Website conversations answered by the assistant." },
+            { key: "articles_suggested", label: "Articles suggested", value: countJobsByAction(jobs, "suggest_article"), description: "Knowledge base articles suggested during support chats." },
+            { key: "tickets_created", label: "Tickets created", value: countJobsByAction(jobs, "capture_ticket"), description: "Support tickets created from website conversations." },
+            { key: "media_sent", label: "Media sent", value: countJobsByAction(jobs, "send_media"), description: "Images or videos sent in the website assistant." },
+            { key: "handoffs", label: "Human handoffs", value: countJobsByAction(jobs, "handoff_agent"), description: "Chats escalated to a human operator." },
           ],
         },
       ];
@@ -648,7 +697,8 @@ async function requireChannelJob(organizationId: string, jobId: string) {
 
 export async function listChannelAccounts(organizationId: string, channel?: ChannelKind, pagination?: { limit: number; offset: number }) {
   const client = requireServiceSupabaseClient();
-  return listChannelAccountsRepository(client, requireNonEmptyString(organizationId, "organizationId"), channel, pagination);
+  const accounts = await listChannelAccountsRepository(client, requireNonEmptyString(organizationId, "organizationId"), channel, pagination);
+  return accounts.map((account) => ({ ...account, channel: normalizeStoredChannel(account.channel) }));
 }
 
 export async function createChannelAccount(input: CreateChannelAccountInput) {
@@ -687,7 +737,8 @@ export async function deleteChannelAccount(organizationId: string, accountId: st
 
 export async function listChannelAgents(organizationId: string, channel?: ChannelKind, pagination?: { limit: number; offset: number }) {
   const client = requireServiceSupabaseClient();
-  return listChannelAgentsRepository(client, requireNonEmptyString(organizationId, "organizationId"), channel, pagination);
+  const agents = await listChannelAgentsRepository(client, requireNonEmptyString(organizationId, "organizationId"), channel, pagination);
+  return agents.map((agent) => ({ ...agent, channel: normalizeStoredChannel(agent.channel) }));
 }
 
 export async function createChannelAgent(input: CreateChannelAgentInput) {
@@ -696,7 +747,7 @@ export async function createChannelAgent(input: CreateChannelAgentInput) {
   const channel = parseChannel(input.channel);
   const account = await getChannelAccountRepository(client, organizationId, requireNonEmptyString(input.accountId, "accountId"));
   if (!account) throw new NotFoundError("Channel account not found.");
-  if (account.channel !== channel) throw new ValidationError("Agent channel must match account channel.");
+  if (normalizeStoredChannel(account.channel) !== channel) throw new ValidationError("Agent channel must match account channel.");
   const config = normalizeChannelAgentConfig(channel, input.config, input.agentType);
   return createChannelAgentRepository(client, {
     id: crypto.randomUUID(),
@@ -719,7 +770,7 @@ export async function updateChannelAgent(organizationId: string, agentId: string
   if (input.personaPrompt !== undefined) patch.persona_prompt = optionalString(input.personaPrompt, "personaPrompt");
   if (input.status !== undefined) patch.status = parseBotStatus(input.status);
   if (input.config !== undefined || input.agentType !== undefined) {
-    patch.config = normalizeChannelAgentConfig(agent.channel, input.config ?? agent.config, input.agentType);
+    patch.config = normalizeChannelAgentConfig(normalizeStoredChannel(agent.channel), input.config ?? agent.config, input.agentType);
   }
   return updateChannelAgentRepository(client, agent.organization_id, agent.id, patch);
 }
@@ -731,7 +782,8 @@ export async function deleteChannelAgent(organizationId: string, agentId: string
 
 export async function listChannelFlows(organizationId: string, channel?: ChannelKind, pagination?: { limit: number; offset: number }) {
   const client = requireServiceSupabaseClient();
-  return listChannelFlowsRepository(client, requireNonEmptyString(organizationId, "organizationId"), channel, pagination);
+  const flows = await listChannelFlowsRepository(client, requireNonEmptyString(organizationId, "organizationId"), channel, pagination);
+  return flows.map((flow) => ({ ...flow, channel: normalizeStoredChannel(flow.channel) }));
 }
 
 export async function createChannelFlow(input: CreateChannelFlowInput) {
@@ -742,11 +794,11 @@ export async function createChannelFlow(input: CreateChannelFlowInput) {
   const triggerType = parseChannelTrigger(channel, input.triggerType);
   const account = await getChannelAccountRepository(client, organizationId, requireNonEmptyString(input.accountId, "accountId"));
   if (!account) throw new NotFoundError("Channel account not found.");
-  if (account.channel !== channel) throw new ValidationError("Flow channel must match account channel.");
+  if (normalizeStoredChannel(account.channel) !== channel) throw new ValidationError("Flow channel must match account channel.");
   if (input.agentId) {
     const agent = await getChannelAgentRepository(client, organizationId, input.agentId);
     if (!agent) throw new NotFoundError("Channel agent not found.");
-    if (agent.channel !== channel || agent.account_id !== account.id) throw new ValidationError("Flow agent must belong to the same channel account.");
+    if (normalizeStoredChannel(agent.channel) !== channel || agent.account_id !== account.id) throw new ValidationError("Flow agent must belong to the same channel account.");
     ensureActionAllowedForAgent(channel, agent.config, actionType);
   }
   return createChannelFlowRepository(client, {
@@ -770,21 +822,22 @@ export async function createChannelFlow(input: CreateChannelFlowInput) {
 export async function updateChannelFlow(organizationId: string, flowId: string, input: UpdateChannelFlowInput) {
   const { client, flow } = await requireChannelFlow(requireNonEmptyString(organizationId, "organizationId"), requireNonEmptyString(flowId, "flowId"));
   const patch: Record<string, unknown> = {};
-  const nextActionType = input.actionType !== undefined ? parseChannelAction(flow.channel, input.actionType) : flow.action_type;
+  const normalizedFlowChannel = normalizeStoredChannel(flow.channel);
+  const nextActionType = input.actionType !== undefined ? parseChannelAction(normalizedFlowChannel, input.actionType) : flow.action_type;
   if (input.agentId) {
     const agent = await getChannelAgentRepository(client, flow.organization_id, input.agentId);
     if (!agent) throw new NotFoundError("Channel agent not found.");
-    if (agent.channel !== flow.channel || agent.account_id !== flow.account_id) throw new ValidationError("Flow agent must belong to the same channel account.");
-    ensureActionAllowedForAgent(flow.channel, agent.config, nextActionType);
+    if (normalizeStoredChannel(agent.channel) !== normalizedFlowChannel || agent.account_id !== flow.account_id) throw new ValidationError("Flow agent must belong to the same channel account.");
+    ensureActionAllowedForAgent(normalizedFlowChannel, agent.config, nextActionType);
   } else if (flow.agent_id) {
     const currentAgent = await getChannelAgentRepository(client, flow.organization_id, flow.agent_id);
-    if (currentAgent) ensureActionAllowedForAgent(flow.channel, currentAgent.config, nextActionType);
+    if (currentAgent) ensureActionAllowedForAgent(normalizedFlowChannel, currentAgent.config, nextActionType);
   }
   if (input.agentId !== undefined) patch.agent_id = optionalString(input.agentId, "agentId");
   if (input.automationId !== undefined) patch.automation_id = optionalString(input.automationId, "automationId");
   if (input.name !== undefined) patch.name = requireNonEmptyString(input.name, "name");
   if (input.objective !== undefined) patch.objective = requireNonEmptyString(input.objective, "objective");
-  if (input.triggerType !== undefined) patch.trigger_type = parseChannelTrigger(flow.channel, input.triggerType);
+  if (input.triggerType !== undefined) patch.trigger_type = parseChannelTrigger(normalizedFlowChannel, input.triggerType);
   if (input.actionType !== undefined) patch.action_type = nextActionType;
   if (input.contentType !== undefined) patch.content_type = optionalString(input.contentType, "contentType");
   if (input.promptTemplate !== undefined) patch.prompt_template = optionalString(input.promptTemplate, "promptTemplate");
@@ -800,7 +853,8 @@ export async function deleteChannelFlow(organizationId: string, flowId: string) 
 
 export async function listChannelJobs(organizationId: string, channel?: ChannelKind, pagination?: { limit: number; offset: number }) {
   const client = requireServiceSupabaseClient();
-  return listChannelJobsRepository(client, requireNonEmptyString(organizationId, "organizationId"), channel, pagination);
+  const jobs = await listChannelJobsRepository(client, requireNonEmptyString(organizationId, "organizationId"), channel, pagination);
+  return jobs.map((job) => ({ ...job, channel: normalizeStoredChannel(job.channel) }));
 }
 
 export async function createChannelJob(input: CreateChannelJobInput) {
@@ -809,16 +863,16 @@ export async function createChannelJob(input: CreateChannelJobInput) {
   const channel = parseChannel(input.channel);
   const account = await getChannelAccountRepository(client, organizationId, requireNonEmptyString(input.accountId, "accountId"));
   if (!account) throw new NotFoundError("Channel account not found.");
-  if (account.channel !== channel) throw new ValidationError("Job channel must match account channel.");
+  if (normalizeStoredChannel(account.channel) !== channel) throw new ValidationError("Job channel must match account channel.");
   const flow = await getChannelFlowRepository(client, organizationId, requireNonEmptyString(input.flowId, "flowId"));
   if (!flow) throw new NotFoundError("Channel flow not found.");
-  if (flow.channel !== channel || flow.account_id !== account.id) throw new ValidationError("Job flow must belong to the same channel account.");
+  if (normalizeStoredChannel(flow.channel) !== channel || flow.account_id !== account.id) throw new ValidationError("Job flow must belong to the same channel account.");
 
   let agentId: string | null = optionalString(input.agentId, "agentId");
   if (agentId) {
     const agent = await getChannelAgentRepository(client, organizationId, agentId);
     if (!agent) throw new NotFoundError("Channel agent not found.");
-    if (agent.channel !== channel || agent.account_id !== account.id) throw new ValidationError("Job agent must belong to the same channel account.");
+    if (normalizeStoredChannel(agent.channel) !== channel || agent.account_id !== account.id) throw new ValidationError("Job agent must belong to the same channel account.");
   } else {
     agentId = flow.agent_id;
   }
@@ -875,6 +929,7 @@ export async function executeChannelJob(organizationId: string, jobId: string) {
     provider_error: null,
     started_at: new Date().toISOString()
   });
+  const normalizedStartedChannel = normalizeStoredChannel(started.channel);
 
   await createChannelJobEventRepository(client, {
     id: crypto.randomUUID(),
@@ -885,7 +940,7 @@ export async function executeChannelJob(organizationId: string, jobId: string) {
     payload: { actionType: flow.action_type, provider: started.provider }
   });
 
-  const connector = getChannelConnector(started.channel);
+  const connector = getChannelConnector(normalizedStartedChannel);
   let result: { outcome: ChannelJobOutcome; summary: string; resultPayload: Record<string, unknown>; isPreview: boolean };
 
   if (connector) {
@@ -896,7 +951,7 @@ export async function executeChannelJob(organizationId: string, jobId: string) {
     result = {
       outcome: preview.outcome,
       summary: preview.summary,
-      resultPayload: buildPreviewResultPayload(started.channel, flow.action_type, started),
+      resultPayload: buildPreviewResultPayload(normalizedStartedChannel, flow.action_type, started),
       isPreview: true,
     };
   }
@@ -991,6 +1046,11 @@ export async function getChannelAutomationSnapshot(organizationId: string) {
   if (contacts.error) throw new Error(contacts.error.message);
   if (automations.error) throw new Error(automations.error.message);
 
+  const normalizedAccounts = accounts.map((account) => ({ ...account, channel: normalizeStoredChannel(account.channel) }));
+  const normalizedAgents = agents.map((agent) => ({ ...agent, channel: normalizeStoredChannel(agent.channel) }));
+  const normalizedFlows = flows.map((flow) => ({ ...flow, channel: normalizeStoredChannel(flow.channel) }));
+  const normalizedJobs = jobs.map((job) => ({ ...job, channel: normalizeStoredChannel(job.channel) }));
+
   return {
     channels: Object.fromEntries(
       Object.entries(CHANNEL_ACTIONS).map(([channel, actions]) => [
@@ -1006,17 +1066,17 @@ export async function getChannelAutomationSnapshot(organizationId: string) {
       Object.keys(CHANNEL_ACTIONS).map((channel) => [
         channel,
         buildChannelSummary(channel as ChannelKind, {
-          accounts,
-          agents,
-          flows,
-          jobs,
+          accounts: normalizedAccounts,
+          agents: normalizedAgents,
+          flows: normalizedFlows,
+          jobs: normalizedJobs,
         }),
       ])
     ),
-    accounts,
-    agents,
-    flows,
-    jobs,
+    accounts: normalizedAccounts,
+    agents: normalizedAgents,
+    flows: normalizedFlows,
+    jobs: normalizedJobs,
     contacts: contacts.data ?? [],
     automations: automations.data ?? []
   };

@@ -5,7 +5,7 @@
  * Define las entidades de dominio y los inputs de los servicios.
  *
  * Canales soportados (ChannelKind):
- *   automations, email, facebook, instagram, x, tiktok, whatsapp, messenger
+ *   customer_support, email, facebook, instagram, x, tiktok, whatsapp, messenger
  *
  * Entidades de base de datos:
  *   - ChannelAccount: cuenta conectada de una plataforma (ej: @miempresa en Instagram)
@@ -24,7 +24,7 @@
  * Inputs de creación/actualización usados por los servicios.
  */
 
-export type ChannelKind = "automations" | "email" | "facebook" | "instagram" | "x" | "tiktok" | "whatsapp" | "messenger";
+export type ChannelKind = "customer_support" | "email" | "facebook" | "instagram" | "x" | "tiktok" | "whatsapp" | "messenger";
 export type ChannelAccountStatus = "draft" | "connected" | "disconnected" | "error";
 export type ChannelBotStatus = "draft" | "active" | "paused";
 export type ChannelJobStatus = "draft" | "queued" | "scheduled" | "running" | "completed" | "failed" | "canceled" | "requires_auth";

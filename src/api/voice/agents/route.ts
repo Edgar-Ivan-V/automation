@@ -1,8 +1,0 @@
-// POST /api/voice/agents
-// Creates a new call agent linked to the authenticated organization.
-import { createCallAgent } from "../../../modules/voice/index.js";
-import type { CreateCallAgentInput } from "../../../modules/voice/index.js";
-
-export async function postCallAgent(organizationId: string, body: Omit<CreateCallAgentInput, "organizationId">) {
-  return createCallAgent({ organizationId, ...body });
-}

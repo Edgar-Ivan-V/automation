@@ -1,0 +1,45 @@
+# fly.toml — configuración de deploy en Fly.io
+# Documentación: https://fly.io/docs/reference/configuration/
+#
+# Para hacer el primer deploy:
+#   fly launch --no-deploy   (crea la app en Fly, no despliega aún)
+#   fly secrets set SUPABASE_URL="..." SUPABASE_SERVICE_ROLE_KEY="..."
+#   fly secrets set TWILIO_ACCOUNT_SID="..." TWILIO_AUTH_TOKEN="..."
+#   fly secrets set TWILIO_FROM_NUMBER="..." TWILIO_WEBHOOK_BASE_URL="https://<app>.fly.dev"
+#   fly deploy
+#
+# Para deploys siguientes: fly deploy
+# Ver logs en tiempo real: fly logs
+# Ver estado: fly status
+
+app = "automation-backend"
+primary_region = "mia"         # Miami — más cercano a LATAM
+kill_signal = "SIGTERM"
+kill_timeout = "10s"
+
+[build]
+  # Usa el Dockerfile de este directorio
+
+[env]
+  NODE_ENV = "production"
+  PORT = "3005"
+  # Las variables sensibles (SUPABASE_*, TWILIO_*) se configuran como
+  # secrets via: fly secrets set KEY=value
+
+[http_service]
+  internal_port = 3005
+  force_https = true
+  auto_stop_machines = "stop"     # Apaga la máquina si no hay tráfico
+  auto_start_machines = true      # La vuelve a arrancar cuando llega un request
+  min_machines_running = 0        # Permite escalar a 0 (ahorra costo)
+  processes = ["app"]
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 100
+    hard_limit = 150
+
+[[vm]]
+  memory = "256mb"
+  cpu_kind = "shared"
+  cpus = 1

@@ -1,0 +1,22 @@
+# Dependencias — se reinstalan en el build
+node_modules
+
+# Artefactos de compilación previos
+dist
+
+# Variables de entorno con credenciales — NUNCA al contenedor
+.env
+.env.*
+!.env.example
+
+# Carpeta de frontend (no pertenece al backend)
+frontend
+
+# Archivos de Supabase CLI y migraciones (solo para dev local)
+supabase/.branches
+supabase/.temp
+
+# Archivos de desarrollo
+*.log
+.git
+.gitignore

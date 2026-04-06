@@ -2,7 +2,12 @@
   "name": "automation-frontend",
   "version": "0.1.0",
   "private": true,
-  "description": "Frontend React/Next.js para el dashboard de automatizaciones. Consume la API del backend (automation-backend).",
+  "type": "module",
+  "description": "Frontend local del dashboard de automatizaciones. Sirve la UI y hace proxy al backend.",
+  "scripts": {
+    "dev": "node server.mjs",
+    "start": "node server.mjs"
+  },
   "dependencies": {
     "lucide-react": "latest",
     "react": "^18.0.0",
@@ -14,8 +19,8 @@
     "typescript": "^5.0.0"
   },
   "notes": [
-    "Este package.json es un placeholder. El frontend real vive en la app Next.js que consume este backend.",
-    "Los imports @agency/backend, @/lib/hooks y @/components/ui se resuelven en esa app.",
-    "El componente AutomationsPage se pega en la ruta /automations del proyecto Next.js."
+    "Este frontend local sirve el dashboard actual y hace proxy de /api al backend en localhost:3005.",
+    "El componente AutomationsPage sigue disponible como base para migrar a una app React/Next mas completa.",
+    "Si existe una app Next.js separada, este frontend puede reemplazarse por esa app despues."
   ]
 }

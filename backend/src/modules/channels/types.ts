@@ -121,6 +121,40 @@ export interface ChannelActionDefinition {
   description: string;
 }
 
+export interface ChannelSummaryMetric {
+  key: string;
+  label: string;
+  value: number;
+  unit?: string;
+  description?: string;
+}
+
+export interface ChannelSummarySectionItem {
+  key: string;
+  label: string;
+  value: number;
+  description?: string;
+}
+
+export interface ChannelSummarySection {
+  key: string;
+  title: string;
+  description?: string;
+  items: ChannelSummarySectionItem[];
+}
+
+export interface ChannelSummary {
+  channel: ChannelKind;
+  connected: boolean;
+  accountCount: number;
+  connectedAccountCount: number;
+  agentCount: number;
+  flowCount: number;
+  jobCount: number;
+  metrics: ChannelSummaryMetric[];
+  sections: ChannelSummarySection[];
+}
+
 export interface CreateChannelAccountInput {
   organizationId: string;
   channel: ChannelKind;

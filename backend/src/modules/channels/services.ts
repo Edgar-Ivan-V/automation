@@ -52,11 +52,15 @@ import { requireServiceSupabaseClient } from "../shared/supabase-client.js";
 import { NotFoundError, ValidationError } from "../shared/errors.js";
 import { optionalString, requireNonEmptyString } from "../shared/validation.js";
 import type {
+  ChannelAccount,
   ChannelAccountStatus,
   ChannelBotStatus,
+  ChannelFlow,
   ChannelJobOutcome,
   ChannelJobStatus,
   ChannelKind,
+  ChannelSummary,
+  ChannelSummarySection,
   CompleteChannelJobInput,
   CreateChannelAccountInput,
   CreateChannelAgentInput,
@@ -109,12 +113,352 @@ function requireRecord(value: unknown, field: string) {
   return value as Record<string, unknown>;
 }
 
+function buildPreviewResultPayload(channel: ChannelKind, actionType: string, job: { title: string; target_ref: string | null; payload: Record<string, unknown> }) {
+  const base = {
+    mode: "preview",
+    channel,
+    actionType,
+    title: job.title,
+    targetRef: job.target_ref,
+    input: job.payload,
+  } satisfies Record<string, unknown>;
+
+  switch (channel) {
+    case "instagram":
+      if (actionType === "publish_post") {
+        return {
+          ...base,
+          asset: { format: "image", status: "draft_preview", uploadedAssets: 1 },
+          metrics: { reach: 420, likes: 37, comments: 6, saves: 9, shares: 4, leads: 2 },
+        };
+      }
+      if (actionType === "publish_story") {
+        return {
+          ...base,
+          asset: { format: "story", status: "draft_preview", uploadedAssets: 1 },
+          metrics: { impressions: 310, tapsForward: 54, tapsBack: 18, replies: 5 },
+        };
+      }
+      if (actionType === "publish_reel") {
+        return {
+          ...base,
+          asset: { format: "reel", status: "draft_preview", uploadedAssets: 1 },
+          metrics: { plays: 1200, completionRate: 41, shares: 18, saves: 13, leads: 3 },
+        };
+      }
+      if (actionType === "reply_dm") {
+        return {
+          ...base,
+          conversation: { lane: "instagram_dm", status: "replied_preview", handoffRecommended: false },
+          metrics: { firstResponseMinutes: 8, repliesSent: 1 },
+        };
+      }
+      break;
+    case "tiktok":
+      if (actionType === "publish_video") {
+        return {
+          ...base,
+          asset: { format: "video", status: "draft_preview", uploadedVideos: 1 },
+          metrics: { views: 2300, completionRate: 34, likes: 120, comments: 19, shares: 22, leads: 4 },
+        };
+      }
+      if (actionType === "reply_comment") {
+        return {
+          ...base,
+          conversation: { lane: "comment", status: "replied_preview" },
+          metrics: { commentsHandled: 1, conversionPotential: 61 },
+        };
+      }
+      if (actionType === "capture_lead") {
+        return {
+          ...base,
+          lead: { status: "captured_preview", source: "video_comment" },
+          metrics: { qualificationScore: 72 },
+        };
+      }
+      break;
+    case "email":
+      if (actionType === "send_email") {
+        return {
+          ...base,
+          delivery: { status: "queued_preview", campaignType: "single_email" },
+          metrics: { delivered: 1, openRate: 46, clickRate: 9, replyRate: 6 },
+        };
+      }
+      if (actionType === "send_sequence") {
+        return {
+          ...base,
+          delivery: { status: "queued_preview", campaignType: "sequence", steps: 3 },
+          metrics: { enrolledContacts: 24, activeStep: 1, expectedReplyRate: 12 },
+        };
+      }
+      if (actionType === "tag_contact") {
+        return {
+          ...base,
+          segmentation: { status: "tagged_preview", tagsApplied: ["interested", "follow_up"] },
+          metrics: { taggedContacts: 1 },
+        };
+      }
+      break;
+    case "facebook":
+      if (actionType === "publish_post") {
+        return {
+          ...base,
+          asset: { format: "post", status: "draft_preview", publishedPosts: 1 },
+          metrics: { reach: 510, reactions: 42, comments: 11, leads: 2 },
+        };
+      }
+      if (actionType === "reply_comment") {
+        return {
+          ...base,
+          conversation: { lane: "comment", status: "replied_preview" },
+          metrics: { commentsHandled: 1, responseMinutes: 12 },
+        };
+      }
+      if (actionType === "reply_dm") {
+        return {
+          ...base,
+          conversation: { lane: "dm", status: "replied_preview", handoffRecommended: false },
+          metrics: { repliesSent: 1, openThreads: 3 },
+        };
+      }
+      if (actionType === "capture_lead") {
+        return {
+          ...base,
+          lead: { status: "captured_preview", source: "facebook_interaction" },
+          metrics: { qualificationScore: 68 },
+        };
+      }
+      break;
+    case "x":
+      return {
+        ...base,
+        conversation: { lane: actionType === "send_dm" ? "dm" : "public", status: "executed_preview" },
+        metrics: { impressions: 340, engagements: 28, replies: actionType === "reply_mention" ? 1 : 0 },
+      };
+    case "whatsapp":
+      if (actionType === "send_template") {
+        return {
+          ...base,
+          conversation: { lane: "template", status: "queued_preview" },
+          metrics: { delivered: 1, replyRate: 24, handoffRate: 7 },
+        };
+      }
+      if (actionType === "reply_message") {
+        return {
+          ...base,
+          conversation: { lane: "inbox", status: "replied_preview" },
+          metrics: { firstResponseMinutes: 4, resolvedChats: 1 },
+        };
+      }
+      if (actionType === "handoff_agent") {
+        return {
+          ...base,
+          conversation: { lane: "handoff", status: "escalated_preview" },
+          metrics: { handoffs: 1, waitMinutes: 2 },
+        };
+      }
+      break;
+    case "messenger":
+      return {
+        ...base,
+        conversation: { lane: actionType === "reply_comment" ? "comment" : "inbox", status: "executed_preview" },
+        metrics: { repliesSent: 1, openThreads: 2, handoffs: actionType === "handoff_agent" ? 1 : 0 },
+      };
+    case "automations":
+      return {
+        ...base,
+        workflow: { status: "executed_preview", actionType },
+        metrics: { downstreamTasks: 3, retriesAvailable: 1 },
+      };
+  }
+
+  return base;
+}
+
 function buildExecutionPreview(actionType: string) {
   if (actionType.startsWith("publish")) return { outcome: "published", summary: "Preview generated locally. Connect the platform provider to publish for real." } as const;
   if (actionType.startsWith("send")) return { outcome: "sent", summary: "Preview generated locally. Connect the provider to deliver the message for real." } as const;
   if (actionType.startsWith("reply")) return { outcome: "replied", summary: "Preview generated locally. Connect the platform inbox provider to reply for real." } as const;
   if (actionType.includes("lead")) return { outcome: "lead_captured", summary: "Lead handling simulated locally. Connect CRM or provider to complete the flow." } as const;
   return { outcome: "unknown", summary: "Execution completed in preview mode. External provider is still pending." } as const;
+}
+
+function countJobsByAction(jobs: Array<{ flow?: { action_type?: string | null } | null }>, actionType: string) {
+  return jobs.filter((job) => job.flow?.action_type === actionType).length;
+}
+
+function buildChannelSummary(channel: ChannelKind, input: {
+  accounts: ChannelAccount[];
+  agents: Array<{ channel: ChannelKind }>;
+  flows: Array<ChannelFlow>;
+  jobs: Array<{ channel: ChannelKind; status: string; outcome?: string | null; flow?: { action_type?: string | null } | null; result_payload?: Record<string, unknown> | null }>;
+}): ChannelSummary {
+  const accounts = input.accounts.filter((account) => account.channel === channel);
+  const connectedAccountCount = accounts.filter((account) => account.status === "connected").length;
+  const agents = input.agents.filter((agent) => agent.channel === channel);
+  const flows = input.flows.filter((flow) => flow.channel === channel);
+  const jobs = input.jobs.filter((job) => job.channel === channel);
+  const completedJobs = jobs.filter((job) => job.status === "completed").length;
+  const runningJobs = jobs.filter((job) => job.status === "running" || job.status === "scheduled" || job.status === "queued").length;
+  const blockedJobs = jobs.filter((job) => job.status === "failed" || job.status === "requires_auth" || job.status === "canceled").length;
+
+  const metrics = [
+    { key: "connected_accounts", label: "Connected accounts", value: connectedAccountCount, description: "Accounts ready to operate." },
+    { key: "agents", label: "Agents", value: agents.length, description: "Reusable agents on this channel." },
+    { key: "flows", label: "Flows", value: flows.length, description: "Configured flows for this channel." },
+    { key: "jobs", label: "Jobs", value: jobs.length, description: "Recorded executions on this channel." },
+  ];
+
+  const executionSection: ChannelSummarySection = {
+    key: "execution",
+    title: "Execution status",
+    description: "High-level operational state for this channel.",
+    items: [
+      { key: "completed", label: "Completed", value: completedJobs, description: "Finished jobs." },
+      { key: "running", label: "Running or queued", value: runningJobs, description: "Jobs still in progress." },
+      { key: "blocked", label: "Blocked or failed", value: blockedJobs, description: "Jobs that need attention." },
+    ],
+  };
+
+  let sections: ChannelSummarySection[] = [executionSection];
+
+  switch (channel) {
+    case "instagram":
+      sections = [
+        executionSection,
+        {
+          key: "content_mix",
+          title: "Instagram content mix",
+          description: "Feed, stories, reels and DM activity.",
+          items: [
+            { key: "images_uploaded", label: "Images uploaded", value: countJobsByAction(jobs, "publish_post"), description: "Feed photos and carousels." },
+            { key: "stories_published", label: "Stories published", value: countJobsByAction(jobs, "publish_story"), description: "Story assets published." },
+            { key: "reels_published", label: "Reels published", value: countJobsByAction(jobs, "publish_reel"), description: "Short-form video assets." },
+            { key: "dms_replied", label: "DMs replied", value: countJobsByAction(jobs, "reply_dm"), description: "Inbox conversations handled." },
+          ],
+        },
+      ];
+      break;
+    case "tiktok":
+      sections = [
+        executionSection,
+        {
+          key: "video_pipeline",
+          title: "TikTok video pipeline",
+          description: "Uploads, comments and leads from short-form video.",
+          items: [
+            { key: "videos_uploaded", label: "Videos uploaded", value: countJobsByAction(jobs, "publish_video"), description: "Videos staged or published." },
+            { key: "comments_replied", label: "Comments replied", value: countJobsByAction(jobs, "reply_comment"), description: "Public comment responses." },
+            { key: "leads_captured", label: "Leads captured", value: countJobsByAction(jobs, "capture_lead"), description: "Lead capture executions." },
+          ],
+        },
+      ];
+      break;
+    case "email":
+      sections = [
+        executionSection,
+        {
+          key: "email_operations",
+          title: "Email operations",
+          description: "One-off sends, sequences and segmentation activity.",
+          items: [
+            { key: "emails_sent", label: "Emails sent", value: countJobsByAction(jobs, "send_email"), description: "Single-message sends." },
+            { key: "sequences_running", label: "Sequences running", value: countJobsByAction(jobs, "send_sequence"), description: "Sequence enrollments or launches." },
+            { key: "contacts_tagged", label: "Contacts tagged", value: countJobsByAction(jobs, "tag_contact"), description: "Segmentation updates." },
+          ],
+        },
+      ];
+      break;
+    case "facebook":
+      sections = [
+        executionSection,
+        {
+          key: "facebook_engagement",
+          title: "Facebook engagement",
+          description: "Publication, comment handling, DMs and leads.",
+          items: [
+            { key: "posts_published", label: "Posts published", value: countJobsByAction(jobs, "publish_post"), description: "Feed posts shipped." },
+            { key: "comments_replied", label: "Comments replied", value: countJobsByAction(jobs, "reply_comment"), description: "Comment replies completed." },
+            { key: "dms_replied", label: "DMs replied", value: countJobsByAction(jobs, "reply_dm"), description: "Messenger-style private replies from Facebook." },
+            { key: "leads_captured", label: "Leads captured", value: countJobsByAction(jobs, "capture_lead"), description: "Lead capture jobs from interaction." },
+          ],
+        },
+      ];
+      break;
+    case "x":
+      sections = [
+        executionSection,
+        {
+          key: "x_conversation",
+          title: "X publishing and conversation",
+          description: "Posts, mentions and private message activity.",
+          items: [
+            { key: "posts_published", label: "Posts published", value: countJobsByAction(jobs, "publish_post"), description: "Posts or threads sent to X." },
+            { key: "mentions_replied", label: "Mentions replied", value: countJobsByAction(jobs, "reply_mention"), description: "Public mention replies." },
+            { key: "dms_sent", label: "DMs sent", value: countJobsByAction(jobs, "send_dm"), description: "Direct messages sent." },
+          ],
+        },
+      ];
+      break;
+    case "whatsapp":
+      sections = [
+        executionSection,
+        {
+          key: "whatsapp_inbox",
+          title: "WhatsApp inbox",
+          description: "Templates, replies and handoff volume.",
+          items: [
+            { key: "templates_sent", label: "Templates sent", value: countJobsByAction(jobs, "send_template"), description: "Outbound template sends." },
+            { key: "messages_replied", label: "Messages replied", value: countJobsByAction(jobs, "reply_message"), description: "Inbox replies sent." },
+            { key: "handoffs", label: "Human handoffs", value: countJobsByAction(jobs, "handoff_agent"), description: "Escalations to humans." },
+          ],
+        },
+      ];
+      break;
+    case "messenger":
+      sections = [
+        executionSection,
+        {
+          key: "messenger_inbox",
+          title: "Messenger inbox",
+          description: "Messages, comment replies and escalations.",
+          items: [
+            { key: "messages_sent", label: "Messages sent", value: countJobsByAction(jobs, "send_message"), description: "Messenger messages delivered." },
+            { key: "comments_replied", label: "Comments replied", value: countJobsByAction(jobs, "reply_comment"), description: "Comment-related replies." },
+            { key: "handoffs", label: "Human handoffs", value: countJobsByAction(jobs, "handoff_agent"), description: "Escalations to human operators." },
+          ],
+        },
+      ];
+      break;
+    case "automations":
+      sections = [
+        executionSection,
+        {
+          key: "workflow_ops",
+          title: "Automation workflows",
+          description: "Internal orchestration work across the system.",
+          items: [
+            { key: "workflow_runs", label: "Workflow runs", value: countJobsByAction(jobs, "workflow_run"), description: "Generic workflow executions." },
+            { key: "lead_routing", label: "Lead routing", value: countJobsByAction(jobs, "lead_routing"), description: "Routing jobs executed." },
+            { key: "crm_updates", label: "CRM updates", value: countJobsByAction(jobs, "crm_update"), description: "CRM sync jobs executed." },
+          ],
+        },
+      ];
+      break;
+  }
+
+  return {
+    channel,
+    connected: connectedAccountCount > 0,
+    accountCount: accounts.length,
+    connectedAccountCount,
+    agentCount: agents.length,
+    flowCount: flows.length,
+    jobCount: jobs.length,
+    metrics,
+    sections,
+  };
 }
 
 async function requireChannelAccount(organizationId: string, accountId: string) {
@@ -379,7 +723,7 @@ export async function executeChannelJob(organizationId: string, jobId: string) {
     result = {
       outcome: preview.outcome,
       summary: preview.summary,
-      resultPayload: { mode: "preview", channel: started.channel, actionType: flow.action_type, targetRef: started.target_ref, payload: started.payload },
+      resultPayload: buildPreviewResultPayload(started.channel, flow.action_type, started),
       isPreview: true,
     };
   }
@@ -476,6 +820,17 @@ export async function getChannelAutomationSnapshot(organizationId: string) {
 
   return {
     channels: Object.fromEntries(Object.entries(CHANNEL_ACTIONS).map(([channel, actions]) => [channel, { actions }])),
+    channelSummaries: Object.fromEntries(
+      Object.keys(CHANNEL_ACTIONS).map((channel) => [
+        channel,
+        buildChannelSummary(channel as ChannelKind, {
+          accounts,
+          agents,
+          flows,
+          jobs,
+        }),
+      ])
+    ),
     accounts,
     agents,
     flows,

@@ -228,6 +228,258 @@
         color: var(--text);
         font-weight: 700;
       }
+      .channel-experience {
+        display: grid;
+        gap: 14px;
+      }
+      .showcase-grid {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.7fr);
+      }
+      .asset-gallery {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      }
+      .asset-card {
+        background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 16px;
+        display: grid;
+        gap: 12px;
+      }
+      .asset-preview {
+        min-height: 124px;
+        border-radius: 16px;
+        padding: 16px;
+        display: grid;
+        align-content: space-between;
+        color: #fff;
+      }
+      .asset-preview.image { background: linear-gradient(135deg, #2563eb, #7c3aed); }
+      .asset-preview.story { background: linear-gradient(135deg, #ec4899, #f97316); }
+      .asset-preview.reel, .asset-preview.video { background: linear-gradient(135deg, #0f172a, #ef4444); }
+      .asset-preview.post { background: linear-gradient(135deg, #1d4ed8, #2563eb); }
+      .asset-preview.public { background: linear-gradient(135deg, #0f172a, #334155); }
+      .asset-format {
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        opacity: 0.8;
+      }
+      .asset-headline {
+        font-family: "Aptos Display", "Aptos", sans-serif;
+        font-size: 22px;
+        letter-spacing: -0.04em;
+        line-height: 1.05;
+      }
+      .asset-status {
+        display: inline-flex;
+        width: fit-content;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.18);
+        font-size: 11px;
+        font-weight: 700;
+      }
+      .asset-stats {
+        display: grid;
+        gap: 8px;
+      }
+      .asset-stat-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        font-size: 12px;
+        color: var(--muted-strong);
+      }
+      .asset-stat-row strong {
+        color: var(--text);
+      }
+      .section-note {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.5;
+        margin-bottom: 12px;
+      }
+      .metric-pill-grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      }
+      .metric-pill {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 14px;
+        display: grid;
+        gap: 6px;
+      }
+      .metric-pill-label {
+        font-size: 12px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .metric-pill-value {
+        font-family: "Aptos Display", "Aptos", sans-serif;
+        font-size: 28px;
+        letter-spacing: -0.04em;
+      }
+      .metric-pill-sub {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+      .pipeline-board {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .pipeline-column {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        padding: 16px;
+        display: grid;
+        gap: 12px;
+      }
+      .pipeline-kicker {
+        font-size: 11px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .pipeline-value {
+        font-family: "Aptos Display", "Aptos", sans-serif;
+        font-size: 36px;
+        letter-spacing: -0.05em;
+      }
+      .pipeline-helper {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+      .chat-layout {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: minmax(0, 1.05fr) minmax(280px, 0.95fr);
+      }
+      .chat-thread-card {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        padding: 18px;
+        display: grid;
+        gap: 12px;
+      }
+      .thread-bubble {
+        border-radius: 18px;
+        padding: 14px 16px;
+        max-width: 88%;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      .thread-bubble.user {
+        background: #eff6ff;
+        color: #1d4ed8;
+      }
+      .thread-bubble.system {
+        background: #f8fafc;
+        color: var(--text);
+        justify-self: end;
+      }
+      .thread-meta {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .timeline-stack {
+        display: grid;
+        gap: 12px;
+      }
+      .timeline-card {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 16px;
+        display: grid;
+        gap: 8px;
+      }
+      .timeline-label {
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .timeline-title {
+        font-weight: 700;
+        color: var(--text);
+      }
+      .timeline-subtitle {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+      .timeline-kpis {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .mini-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 10px;
+        border-radius: 999px;
+        background: var(--panel-soft);
+        border: 1px solid var(--line);
+        font-size: 12px;
+        color: var(--muted-strong);
+      }
+      .voice-transcript {
+        background: #0f172a;
+        color: #e2e8f0;
+        border-radius: 18px;
+        padding: 16px;
+        display: grid;
+        gap: 10px;
+      }
+      .voice-transcript-line {
+        font-size: 13px;
+        line-height: 1.55;
+      }
+      .voice-transcript-line strong {
+        color: #fff;
+      }
+      .spotlight-card {
+        background: linear-gradient(135deg, #eff6ff, #ffffff);
+        border: 1px solid #bfdbfe;
+        border-radius: var(--radius-lg);
+        padding: 18px;
+        display: grid;
+        gap: 14px;
+      }
+      .spotlight-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: flex-start;
+      }
+      .spotlight-subtitle {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      .split-grid {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
       .ring-grid {
         display: grid;
         gap: 14px;
@@ -318,13 +570,15 @@
       .empty-state { padding: 28px; text-align: center; }
 
       @media (max-width: 1180px) {
-        .channel-strip, .summary-grid, .chart-grid, .editor-workspace, .donut-grid, .ring-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .channel-strip, .summary-grid, .chart-grid, .editor-workspace, .donut-grid, .ring-grid, .pipeline-board, .split-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .showcase-grid, .chat-layout { grid-template-columns: 1fr; }
       }
       @media (max-width: 860px) {
         .shell { width: min(100vw - 16px, 1440px); }
         .topbar, .toolbar, .section-row, .item-row, .section-actions, .list-grid.three, .hero-actions, .insight-head { flex-direction: column; align-items: stretch; }
-        .channel-strip, .summary-grid, .chart-grid, .donut-grid, .ring-grid { grid-template-columns: 1fr; }
+        .channel-strip, .summary-grid, .chart-grid, .donut-grid, .ring-grid, .pipeline-board, .split-grid, .asset-gallery { grid-template-columns: 1fr; }
         .donut-layout { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+        .thread-bubble { max-width: 100%; }
       }
     </style>
   </head>
@@ -894,10 +1148,267 @@
         `;
       }
 
+      function getChannelSummary(platformId = state.selectedPlatformId) {
+        return getGenericSnapshot().channelSummaries?.[platformId] ?? null;
+      }
+
+      function getChannelSummarySection(platformId, sectionKey) {
+        return getChannelSummary(platformId)?.sections?.find((section) => section.key === sectionKey) ?? null;
+      }
+
+      function getSectionItemValue(section, itemKey) {
+        return section?.items?.find((item) => item.key === itemKey)?.value ?? 0;
+      }
+
+      function getJobMetrics(job) {
+        const metrics = job?.result_payload?.metrics;
+        return metrics && typeof metrics === "object" ? metrics : {};
+      }
+
+      function getJobPayloadNode(job, key) {
+        const value = job?.result_payload?.[key];
+        return value && typeof value === "object" ? value : {};
+      }
+
+      function getJobActionType(job) {
+        return job?.flow?.action_type || job?.action_type || "";
+      }
+
+      function sumJobMetric(jobs, metricKey) {
+        return jobs.reduce((sum, job) => sum + Number(getJobMetrics(job)[metricKey] || 0), 0);
+      }
+
+      function averageJobMetric(jobs, metricKey) {
+        const values = jobs.map((job) => Number(getJobMetrics(job)[metricKey] || 0)).filter((value) => value > 0);
+        if (!values.length) return 0;
+        return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
+      }
+
+      function formatMetricValue(value, suffix = "") {
+        return `${escapeHtml(String(value))}${suffix}`;
+      }
+
+      function renderMetricCardGrid(items) {
+        return `
+          <div class="summary-grid">
+            ${items.map((item) => `
+              <div class="metric-card">
+                <div class="metric-label">${escapeHtml(item.label)}</div>
+                <div class="display metric-value">${formatMetricValue(item.value, item.suffix || "")}</div>
+              </div>
+            `).join("")}
+          </div>
+        `;
+      }
+
+      function renderMetricPillGrid(items) {
+        if (!items.length) {
+          return `<div class="empty-state"><div class="empty">Todavia no hay metricas enriquecidas para este canal.</div></div>`;
+        }
+        return `
+          <div class="metric-pill-grid">
+            ${items.map((item) => `
+              <div class="metric-pill">
+                <div class="metric-pill-label">${escapeHtml(item.label)}</div>
+                <div class="metric-pill-value">${formatMetricValue(item.value, item.suffix || "")}</div>
+                <div class="metric-pill-sub">${escapeHtml(item.subtitle || "")}</div>
+              </div>
+            `).join("")}
+          </div>
+        `;
+      }
+
+      function renderSectionAsDonut(section, captionFallback) {
+        if (!section) {
+          return `<div class="empty-state"><div class="empty">No hay seccion operativa disponible todavia.</div></div>`;
+        }
+        const colors = ["#2563eb", "#7c3aed", "#059669", "#f59e0b", "#ec4899", "#0f172a"];
+        return renderDonutChart(section.title, section.items.map((item, index) => ({
+          label: item.label,
+          value: item.value,
+          color: colors[index % colors.length]
+        })), {
+          caption: section.description || captionFallback || "Distribucion actual"
+        });
+      }
+
+      function renderAssetGallery(jobs, options = {}) {
+        if (!jobs.length) {
+          return `<div class="empty-state"><div class="empty">${escapeHtml(options.emptyMessage || "Todavia no hay assets para mostrar.")}</div></div>`;
+        }
+
+        return `
+          <div class="asset-gallery">
+            ${jobs.slice(0, options.limit || 3).map((job) => {
+              const asset = getJobPayloadNode(job, "asset");
+              const metrics = getJobMetrics(job);
+              const format = asset.format || options.formatFallback || "asset";
+              const title = job.title || options.titleFallback || "Asset";
+              const subtitle = job.result_summary || job.target_ref || options.subtitleFallback || "Pieza ejecutada desde el canal.";
+              const statKeys = (options.statKeys || Object.keys(metrics).slice(0, 3)).filter((key) => metrics[key] !== undefined);
+              return `
+                <div class="asset-card">
+                  <div class="asset-preview ${escapeHtml(format)}">
+                    <div class="asset-format">${escapeHtml(format)}</div>
+                    <div class="asset-headline">${escapeHtml(title)}</div>
+                    <div class="asset-status">${escapeHtml(job.status || "queued")}</div>
+                  </div>
+                  <div class="item-sub">${escapeHtml(subtitle)}</div>
+                  <div class="asset-stats">
+                    ${statKeys.length ? statKeys.map((key) => `
+                      <div class="asset-stat-row">
+                        <span>${escapeHtml(key)}</span>
+                        <strong>${escapeHtml(String(metrics[key]))}</strong>
+                      </div>
+                    `).join("") : `<div class="asset-stat-row"><span>estado</span><strong>${escapeHtml(job.status || "queued")}</strong></div>`}
+                  </div>
+                </div>
+              `;
+            }).join("")}
+          </div>
+        `;
+      }
+
+      function renderTimelineStack(items, emptyMessage) {
+        if (!items.length) {
+          return `<div class="empty-state"><div class="empty">${escapeHtml(emptyMessage)}</div></div>`;
+        }
+        return `
+          <div class="timeline-stack">
+            ${items.map((item) => `
+              <div class="timeline-card">
+                <div class="timeline-label">${escapeHtml(item.label || "actividad")}</div>
+                <div class="timeline-title">${escapeHtml(item.title)}</div>
+                <div class="timeline-subtitle">${escapeHtml(item.subtitle || "")}</div>
+                ${item.kpis?.length ? `<div class="timeline-kpis">${item.kpis.map((kpi) => `<div class="mini-badge">${escapeHtml(kpi)}</div>`).join("")}</div>` : ""}
+              </div>
+            `).join("")}
+          </div>
+        `;
+      }
+
+      function renderConversationPreview(jobs, options = {}) {
+        if (!jobs.length) {
+          return `<div class="empty-state"><div class="empty">${escapeHtml(options.emptyMessage || "Todavia no hay conversaciones recientes.")}</div></div>`;
+        }
+
+        return `
+          <div class="chat-thread-card">
+            ${jobs.slice(0, options.limit || 3).map((job) => {
+              const conversation = getJobPayloadNode(job, "conversation");
+              return `
+                <div class="thread-meta">
+                  <span>${escapeHtml(job.title || conversation.lane || options.channelLabel || "Conversacion")}</span>
+                  <span>${escapeHtml(job.status || "queued")}</span>
+                </div>
+                <div class="thread-bubble user">${escapeHtml(job.target_ref || options.userText || "Contacto del canal")}</div>
+                <div class="thread-bubble system">${escapeHtml(job.result_summary || options.systemText || "Respuesta generada por el flujo.")}</div>
+              `;
+            }).join("")}
+          </div>
+        `;
+      }
+
+      function renderSummaryMetricCards(platform, analytics) {
+        const jobs = getChannelJobsForPlatform(platform.id);
+
+        switch (platform.id) {
+          case "instagram": {
+            const contentSection = getChannelSummarySection(platform.id, "content_mix");
+            return renderMetricCardGrid([
+              { label: "Imagenes", value: getSectionItemValue(contentSection, "images_uploaded") },
+              { label: "Reels", value: getSectionItemValue(contentSection, "reels_published") },
+              { label: "DMs contestados", value: getSectionItemValue(contentSection, "dms_replied") },
+              { label: "Reach total", value: sumJobMetric(jobs, "reach") + sumJobMetric(jobs, "impressions") + sumJobMetric(jobs, "plays") }
+            ]);
+          }
+          case "tiktok": {
+            const pipelineSection = getChannelSummarySection(platform.id, "video_pipeline");
+            return renderMetricCardGrid([
+              { label: "Videos", value: getSectionItemValue(pipelineSection, "videos_uploaded") },
+              { label: "Comentarios", value: getSectionItemValue(pipelineSection, "comments_replied") },
+              { label: "Leads", value: getSectionItemValue(pipelineSection, "leads_captured") },
+              { label: "Views", value: sumJobMetric(jobs, "views") }
+            ]);
+          }
+          case "email": {
+            const section = getChannelSummarySection(platform.id, "email_operations");
+            return renderMetricCardGrid([
+              { label: "Emails", value: getSectionItemValue(section, "emails_sent") },
+              { label: "Secuencias", value: getSectionItemValue(section, "sequences_running") },
+              { label: "Tags", value: getSectionItemValue(section, "contacts_tagged") },
+              { label: "Reply rate", value: averageJobMetric(jobs, "replyRate"), suffix: "%" }
+            ]);
+          }
+          case "whatsapp": {
+            const section = getChannelSummarySection(platform.id, "whatsapp_inbox");
+            return renderMetricCardGrid([
+              { label: "Templates", value: getSectionItemValue(section, "templates_sent") },
+              { label: "Replies", value: getSectionItemValue(section, "messages_replied") },
+              { label: "Handoffs", value: getSectionItemValue(section, "handoffs") },
+              { label: "Resoluciones", value: sumJobMetric(jobs, "resolvedChats") }
+            ]);
+          }
+          case "messenger": {
+            const section = getChannelSummarySection(platform.id, "messenger_inbox");
+            return renderMetricCardGrid([
+              { label: "Mensajes", value: getSectionItemValue(section, "messages_sent") },
+              { label: "Comentarios", value: getSectionItemValue(section, "comments_replied") },
+              { label: "Handoffs", value: getSectionItemValue(section, "handoffs") },
+              { label: "Threads abiertos", value: sumJobMetric(jobs, "openThreads") }
+            ]);
+          }
+          case "facebook": {
+            const section = getChannelSummarySection(platform.id, "facebook_engagement");
+            return renderMetricCardGrid([
+              { label: "Posts", value: getSectionItemValue(section, "posts_published") },
+              { label: "Comentarios", value: getSectionItemValue(section, "comments_replied") },
+              { label: "DMs", value: getSectionItemValue(section, "dms_replied") },
+              { label: "Reach", value: sumJobMetric(jobs, "reach") }
+            ]);
+          }
+          case "x": {
+            const section = getChannelSummarySection(platform.id, "x_conversation");
+            return renderMetricCardGrid([
+              { label: "Posts", value: getSectionItemValue(section, "posts_published") },
+              { label: "Mentions", value: getSectionItemValue(section, "mentions_replied") },
+              { label: "DMs", value: getSectionItemValue(section, "dms_sent") },
+              { label: "Impresiones", value: sumJobMetric(jobs, "impressions") }
+            ]);
+          }
+          case "automations": {
+            const section = getChannelSummarySection(platform.id, "workflow_ops");
+            return renderMetricCardGrid([
+              { label: "Workflow runs", value: getSectionItemValue(section, "workflow_runs") },
+              { label: "Lead routing", value: getSectionItemValue(section, "lead_routing") },
+              { label: "CRM updates", value: getSectionItemValue(section, "crm_updates") },
+              { label: "Downstream tasks", value: sumJobMetric(jobs, "downstreamTasks") }
+            ]);
+          }
+          case "phone": {
+            const flows = getChannelFlowsForPlatform(platform.id);
+            return renderMetricCardGrid([
+              { label: "Llamadas utiles", value: analytics.messagesAnswered },
+              { label: "Outcomes utiles", value: analytics.leads },
+              { label: "Con transcript", value: jobs.filter((job) => job.transcript).length },
+              { label: "Realtime flows", value: flows.filter((flow) => flow.mode === "realtime").length }
+            ]);
+          }
+          default:
+            return renderMetricCardGrid([
+              { label: platform.id === "phone" ? "Conversaciones utiles" : "Jobs utiles", value: analytics.messagesAnswered },
+              { label: "Resultados utiles", value: analytics.leads },
+              { label: platform.id === "phone" ? "Tasa de respuesta" : "Entrega", value: analytics.responseRate, suffix: "%" },
+              { label: platform.id === "phone" ? "Flows activos" : "Cobertura automatizada", value: analytics.automationCount }
+            ]);
+        }
+      }
+
       function renderSummary() {
         const platform = getSelectedPlatform();
         const accounts = getAccountsForPlatform();
         const analytics = getPlatformAnalytics(platform, accounts, state.snapshot);
+        const summary = getChannelSummary(platform.id);
         const channelAnalytics = PLATFORMS.map((item) => {
           const itemAnalytics = getPlatformAnalytics(item, getAccountsForPlatform(item.id), state.snapshot);
           return {
@@ -922,12 +1433,7 @@
             </div>
           </div>
 
-          <div class="summary-grid">
-            <div class="metric-card"><div class="metric-label">${platform.id === "phone" ? "Conversaciones utiles" : "Jobs utiles"}</div><div class="display metric-value">${analytics.messagesAnswered}</div></div>
-            <div class="metric-card"><div class="metric-label">Resultados utiles</div><div class="display metric-value">${analytics.leads}</div></div>
-            <div class="metric-card"><div class="metric-label">${platform.id === "phone" ? "Tasa de respuesta" : "Entrega"}</div><div class="display metric-value">${analytics.responseRate}%</div></div>
-            <div class="metric-card"><div class="metric-label">${platform.id === "phone" ? "Flows activos" : "Cobertura automatizada"}</div><div class="display metric-value">${analytics.automationCount}</div></div>
-          </div>
+          ${renderSummaryMetricCards(platform, analytics)}
 
           <div class="summary-stack">
             <div class="donut-grid">
@@ -942,9 +1448,9 @@
               <div class="chart-card">
                 <div class="chart-title">Senales clave de ${platform.label}</div>
                 ${renderInsightList([
-                  { title: "Cuentas conectadas", value: `${analytics.accountCount}`, subtitle: analytics.connected ? "El canal tiene infraestructura activa y disponible." : "Todavia no hay conectividad lista para operar." },
-                  { title: "Agentes operando", value: `${analytics.agentCount}`, subtitle: "Perfiles reutilizables disponibles para ejecutar flows y jobs." },
-                  { title: "Flows listos", value: `${analytics.automationCount}`, subtitle: "Workflows configurados para llamadas, envios o respuestas." },
+                  { title: "Cuentas conectadas", value: `${summary?.connectedAccountCount ?? analytics.accountCount}`, subtitle: analytics.connected ? "El canal tiene infraestructura activa y disponible." : "Todavia no hay conectividad lista para operar." },
+                  { title: "Agentes operando", value: `${summary?.agentCount ?? analytics.agentCount}`, subtitle: "Perfiles reutilizables disponibles para ejecutar flows y jobs." },
+                  { title: "Flows listos", value: `${summary?.flowCount ?? analytics.automationCount}`, subtitle: "Workflows configurados para llamadas, envios o respuestas." },
                   { title: "Rendimiento actual", value: `${analytics.throughput}%`, subtitle: platform.id === "phone" ? "Relación entre llamadas completadas y volumen marcado." : "Relación entre resultados utiles y ejecución reciente." }
                 ])}
               </div>
@@ -1060,229 +1566,291 @@
 
       function renderInstagramSummarySection(platform) {
         const jobs = getChannelJobsForPlatform(platform.id);
-        const imageJobs = jobs.filter((item) => item.flow?.action_type === "publish_post");
-        const storyJobs = jobs.filter((item) => item.flow?.action_type === "publish_story");
-        const reelJobs = jobs.filter((item) => item.flow?.action_type === "publish_reel");
-        const dmJobs = jobs.filter((item) => item.flow?.action_type === "reply_dm");
-
+        const summarySection = getChannelSummarySection(platform.id, "content_mix");
+        const imageJobs = jobs.filter((item) => getJobActionType(item) === "publish_post");
+        const storyJobs = jobs.filter((item) => getJobActionType(item) === "publish_story");
+        const reelJobs = jobs.filter((item) => getJobActionType(item) === "publish_reel");
+        const dmJobs = jobs.filter((item) => getJobActionType(item) === "reply_dm");
+        const totalReach = sumJobMetric(imageJobs, "reach") + sumJobMetric(storyJobs, "impressions") + sumJobMetric(reelJobs, "plays");
         return `
-          <div class="chart-grid">
-            ${buildChannelSectionCard("Imagenes subidas", `
-              ${renderDonutChart("Mix de assets de Instagram", [
-                { label: "Feed", value: imageJobs.length, color: "#2563eb" },
-                { label: "Stories", value: storyJobs.length, color: "#ec4899" },
-                { label: "Reels", value: reelJobs.length, color: "#7c3aed" }
-              ], { caption: "Piezas publicadas por formato" })}
-              ${buildSimpleList(
-                imageJobs.slice(0, 4).map((job) => ({
-                  title: job.title || "Imagen publicada",
-                  subtitle: job.result_summary || job.target_ref || "Asset de feed o carrusel listo para revisar",
-                  badge: job.status,
-                  badgeTone: job.status === "completed" ? "ok" : "warn"
-                })),
-                "Todavia no hay imagenes publicadas en Instagram."
-              )}
-            `)}
-            ${buildChannelSectionCard("Reels y DMs", `
-              ${renderInsightList([
-                { title: "Reels publicados", value: `${reelJobs.length}`, subtitle: "Videos cortos que ya pasaron por el flujo de publicacion." },
-                { title: "Stories activadas", value: `${storyJobs.length}`, subtitle: "Piezas efimeras que deberian medirse por taps y replies." },
-                { title: "DMs contestados", value: `${dmJobs.length}`, subtitle: "Conversaciones atendidas desde inbox de Instagram." }
-              ])}
-            `)}
+          <div class="channel-experience">
+            <div class="showcase-grid">
+              <div class="spotlight-card">
+                <div class="spotlight-header">
+                  <div>
+                    <div class="chart-title">Mesa creativa de Instagram</div>
+                    <div class="spotlight-subtitle">Instagram tiene que leerse como una mesa editorial: feed, stories y reels como piezas distintas, no como un módulo genérico de jobs.</div>
+                  </div>
+                  <div class="badge info">Visual</div>
+                </div>
+                ${renderAssetGallery([...imageJobs, ...storyJobs, ...reelJobs], {
+                  emptyMessage: "Todavia no hay assets publicados en Instagram.",
+                  statKeys: ["reach", "impressions", "plays", "saves"],
+                  limit: 3
+                })}
+              </div>
+              ${renderSectionAsDonut(summarySection, "Mix de formatos publicados")}
+            </div>
+            ${renderMetricPillGrid([
+              { label: "Reach total", value: totalReach, subtitle: "Suma de reach, impressions y plays en assets recientes." },
+              { label: "Saves", value: sumJobMetric(imageJobs, "saves") + sumJobMetric(reelJobs, "saves"), subtitle: "Señal de intención y valor guardable." },
+              { label: "Shares", value: sumJobMetric(imageJobs, "shares") + sumJobMetric(reelJobs, "shares"), subtitle: "Distribución orgánica empujada por el contenido." },
+              { label: "DMs replied", value: getSectionItemValue(summarySection, "dms_replied") || dmJobs.length, subtitle: "Conversaciones privadas atendidas desde el canal." }
+            ])}
           </div>
         `;
       }
 
       function renderAutomationsSummarySection(platform) {
         const jobs = getChannelJobsForPlatform(platform.id);
-        const workflowJobs = jobs.filter((item) => item.flow?.action_type === "workflow_run");
-        const routingJobs = jobs.filter((item) => item.flow?.action_type === "lead_routing");
-        const crmJobs = jobs.filter((item) => item.flow?.action_type === "crm_update");
-
+        const section = getChannelSummarySection(platform.id, "workflow_ops");
+        const workflowJobs = jobs.filter((item) => getJobActionType(item) === "workflow_run");
+        const routingJobs = jobs.filter((item) => getJobActionType(item) === "lead_routing");
+        const crmJobs = jobs.filter((item) => getJobActionType(item) === "crm_update");
         return `
-          <div class="chart-grid">
-            ${buildChannelSectionCard("Procesos internos", `
-              ${renderDonutChart("Mix de automatizaciones", [
-                { label: "Workflow run", value: workflowJobs.length, color: "#2563eb" },
-                { label: "Lead routing", value: routingJobs.length, color: "#7c3aed" },
-                { label: "CRM update", value: crmJobs.length, color: "#059669" }
-              ], { caption: "Tipo de proceso interno ejecutado" })}
-            `)}
-            ${buildChannelSectionCard("Estado del orchestration layer", `
-              ${renderInsightList([
-                { title: "Workflows corridos", value: `${workflowJobs.length}`, subtitle: "Ejecuciones de procesos internos o encadenados." },
-                { title: "Leads ruteados", value: `${routingJobs.length}`, subtitle: "Casos enviados a owners, equipos o colas." },
-                { title: "CRM updates", value: `${crmJobs.length}`, subtitle: "Acciones de sincronización o cambio de etapa." }
-              ])}
-            `)}
+          <div class="channel-experience">
+            <div class="split-grid">
+              ${renderSectionAsDonut(section, "Distribucion del orchestration layer")}
+              <div class="spotlight-card">
+                <div class="chart-title">Capa de orquestación</div>
+                <div class="spotlight-subtitle">Automations no es un inbox ni un content feed. Aquí importan procesos, rutas y efectos downstream.</div>
+                ${renderMetricPillGrid([
+                  { label: "Workflow runs", value: workflowJobs.length, subtitle: "Ejecuciones directas de procesos internos." },
+                  { label: "Lead routing", value: routingJobs.length, subtitle: "Casos enviados a owners, equipos o colas." },
+                  { label: "CRM updates", value: crmJobs.length, subtitle: "Sincronizaciones o cambios de etapa." },
+                  { label: "Downstream tasks", value: sumJobMetric(jobs, "downstreamTasks"), subtitle: "Tareas generadas como efecto colateral." }
+                ])}
+              </div>
+            </div>
+            ${renderTimelineStack(
+              jobs.slice(0, 4).map((job) => ({
+                label: getJobActionType(job) || "workflow",
+                title: job.title || "Automation job",
+                subtitle: job.result_summary || "Proceso interno ejecutado desde el orchestration layer.",
+                kpis: [`estado ${job.status || "queued"}`, `resultado ${job.outcome || "n/a"}`]
+              })),
+              "Todavia no hay jobs internos recientes."
+            )}
           </div>
         `;
       }
 
       function renderFacebookSummarySection(platform) {
         const jobs = getChannelJobsForPlatform(platform.id);
-        const postJobs = jobs.filter((item) => item.flow?.action_type === "publish_post");
-        const commentJobs = jobs.filter((item) => item.flow?.action_type === "reply_comment");
-        const dmJobs = jobs.filter((item) => item.flow?.action_type === "reply_dm");
-        const leadJobs = jobs.filter((item) => item.flow?.action_type === "capture_lead");
-
+        const section = getChannelSummarySection(platform.id, "facebook_engagement");
+        const postJobs = jobs.filter((item) => getJobActionType(item) === "publish_post");
+        const commentJobs = jobs.filter((item) => getJobActionType(item) === "reply_comment");
+        const dmJobs = jobs.filter((item) => getJobActionType(item) === "reply_dm");
+        const leadJobs = jobs.filter((item) => getJobActionType(item) === "capture_lead");
         return `
-          <div class="chart-grid">
-            ${buildChannelSectionCard("Publicacion y conversación", `
-              ${renderDonutChart("Mix de Facebook", [
-                { label: "Posts", value: postJobs.length, color: "#2563eb" },
-                { label: "Comentarios", value: commentJobs.length, color: "#7c3aed" },
-                { label: "DMs", value: dmJobs.length, color: "#059669" },
-                { label: "Leads", value: leadJobs.length, color: "#f59e0b" }
-              ], { caption: "Trabajo ejecutado en el canal" })}
-            `)}
-            ${buildChannelSectionCard("Contenido y leads", `
-              ${renderInsightList([
-                { title: "Posts publicados", value: `${postJobs.length}`, subtitle: "Piezas de feed ya ejecutadas." },
-                { title: "Comentarios contestados", value: `${commentJobs.length}`, subtitle: "Replies hechos sobre publicaciones del canal." },
-                { title: "Leads capturados", value: `${leadJobs.length}`, subtitle: "Interacciones convertidas en lead u oportunidad." }
-              ])}
-            `)}
+          <div class="channel-experience">
+            <div class="showcase-grid">
+              <div class="spotlight-card">
+                <div class="chart-title">Contenido y comunidad</div>
+                <div class="spotlight-subtitle">Facebook mezcla feed, comentarios y DMs. Conviene mostrar comunidad y captura de lead en un mismo panel.</div>
+                ${renderAssetGallery(postJobs, {
+                  emptyMessage: "Todavia no hay posts publicados en Facebook.",
+                  statKeys: ["reach", "reactions", "comments", "leads"],
+                  formatFallback: "post",
+                  limit: 2
+                })}
+              </div>
+              ${renderSectionAsDonut(section, "Operacion entre posts, comentarios, DMs y leads")}
+            </div>
+            ${renderMetricPillGrid([
+              { label: "Comentarios replied", value: commentJobs.length, subtitle: "Replies ya ejecutados sobre posts del canal." },
+              { label: "DMs replied", value: dmJobs.length, subtitle: "Conversaciones privadas atendidas." },
+              { label: "Leads", value: leadJobs.length, subtitle: "Interacciones convertidas en oportunidad." },
+              { label: "Reach", value: sumJobMetric(postJobs, "reach"), subtitle: "Cobertura estimada del contenido publicado." }
+            ])}
           </div>
         `;
       }
 
       function renderTikTokSummarySection(platform) {
         const jobs = getChannelJobsForPlatform(platform.id);
-        const videoJobs = jobs.filter((item) => item.flow?.action_type === "publish_video");
-        const commentJobs = jobs.filter((item) => item.flow?.action_type === "reply_comment");
-        const leadJobs = jobs.filter((item) => item.flow?.action_type === "capture_lead");
-
+        const section = getChannelSummarySection(platform.id, "video_pipeline");
+        const videoJobs = jobs.filter((item) => getJobActionType(item) === "publish_video");
+        const commentJobs = jobs.filter((item) => getJobActionType(item) === "reply_comment");
+        const leadJobs = jobs.filter((item) => getJobActionType(item) === "capture_lead");
         return `
-          <div class="chart-grid">
-            ${buildChannelSectionCard("Videos subidos", `
-              ${renderDonutChart("Estado de videos", [
-                { label: "Publicados", value: videoJobs.filter((item) => item.status === "completed").length, color: "#2563eb" },
-                { label: "En proceso", value: videoJobs.filter((item) => item.status === "running" || item.status === "queued").length, color: "#7c3aed" },
-                { label: "Bloqueados", value: videoJobs.filter((item) => item.status === "failed" || item.status === "requires_auth").length, color: "#f59e0b" }
-              ], { caption: "Inventario de video por estado" })}
-              ${buildSimpleList(
-                videoJobs.slice(0, 4).map((job) => ({
-                  title: job.title || "Video subido",
-                  subtitle: job.result_summary || job.target_ref || "Video listo para revisar performance",
-                  badge: job.status,
-                  badgeTone: job.status === "completed" ? "ok" : "warn"
-                })),
-                "Todavia no hay videos subidos en TikTok."
-              )}
-            `)}
-            ${buildChannelSectionCard("Comentarios y leads", `
-              ${renderInsightList([
-                { title: "Comentarios contestados", value: `${commentJobs.length}`, subtitle: "Volumen de replies sobre comentarios del canal." },
-                { title: "Leads capturados", value: `${leadJobs.length}`, subtitle: "Contactos u oportunidades originadas desde TikTok." },
-                { title: "Mensajes contestados", value: "0", subtitle: "Previsto para una fase posterior cuando exista inbox dedicado." }
-              ])}
-            `)}
+          <div class="channel-experience">
+            <div class="pipeline-board">
+              <div class="pipeline-column">
+                <div class="pipeline-kicker">video pipeline</div>
+                <div class="pipeline-value">${getSectionItemValue(section, "videos_uploaded")}</div>
+                <div class="pipeline-helper">Videos subidos o listos para publicar.</div>
+                ${renderAssetGallery(videoJobs, {
+                  emptyMessage: "Todavia no hay videos cargados en TikTok.",
+                  statKeys: ["views", "completionRate", "shares"],
+                  formatFallback: "video",
+                  limit: 2
+                })}
+              </div>
+              <div class="pipeline-column">
+                <div class="pipeline-kicker">comentarios</div>
+                <div class="pipeline-value">${getSectionItemValue(section, "comments_replied")}</div>
+                <div class="pipeline-helper">Comentarios respondidos como conversación pública del video.</div>
+                ${renderTimelineStack(
+                  commentJobs.slice(0, 3).map((job) => ({
+                    label: "reply",
+                    title: job.title || "Comentario atendido",
+                    subtitle: job.result_summary || "Reply ejecutado sobre comentario del video.",
+                    kpis: [`score ${getJobMetrics(job).conversionPotential || 0}`]
+                  })),
+                  "Todavia no hay comentarios contestados."
+                )}
+              </div>
+              <div class="pipeline-column">
+                <div class="pipeline-kicker">captura</div>
+                <div class="pipeline-value">${getSectionItemValue(section, "leads_captured")}</div>
+                <div class="pipeline-helper">Leads salidos de interacciones sobre video.</div>
+                ${renderMetricPillGrid([
+                  { label: "Views", value: sumJobMetric(videoJobs, "views"), subtitle: "Volumen acumulado de reproducciones." },
+                  { label: "Completion", value: averageJobMetric(videoJobs, "completionRate"), suffix: "%", subtitle: "Retención media de los videos recientes." },
+                  { label: "Shares", value: sumJobMetric(videoJobs, "shares"), subtitle: "Señal de distribución orgánica." },
+                  { label: "Leads", value: leadJobs.length, subtitle: "Captura originada en comentarios o respuesta directa." }
+                ])}
+              </div>
+            </div>
           </div>
         `;
       }
 
       function renderXSummarySection(platform) {
         const jobs = getChannelJobsForPlatform(platform.id);
-        const postJobs = jobs.filter((item) => item.flow?.action_type === "publish_post");
-        const mentionJobs = jobs.filter((item) => item.flow?.action_type === "reply_mention");
-        const dmJobs = jobs.filter((item) => item.flow?.action_type === "send_dm");
-
+        const section = getChannelSummarySection(platform.id, "x_conversation");
+        const postJobs = jobs.filter((item) => getJobActionType(item) === "publish_post");
+        const mentionJobs = jobs.filter((item) => getJobActionType(item) === "reply_mention");
+        const dmJobs = jobs.filter((item) => getJobActionType(item) === "send_dm");
         return `
-          <div class="chart-grid">
-            ${buildChannelSectionCard("Posts, mentions y DMs", `
-              ${renderDonutChart("Operacion en X", [
-                { label: "Posts", value: postJobs.length, color: "#0f172a" },
-                { label: "Mentions", value: mentionJobs.length, color: "#2563eb" },
-                { label: "DMs", value: dmJobs.length, color: "#7c3aed" }
-              ], { caption: "Tipo de interacción dominante" })}
-            `)}
-            ${buildChannelSectionCard("Conversación publica", `
-              ${renderInsightList([
-                { title: "Posts publicados", value: `${postJobs.length}`, subtitle: "Publicaciones simples o threads lanzados desde el canal." },
-                { title: "Mentions respondidas", value: `${mentionJobs.length}`, subtitle: "Respuestas hechas a menciones o hilos activos." },
-                { title: "DMs enviados", value: `${dmJobs.length}`, subtitle: "Mensajes privados iniciados o continuados desde X." }
-              ])}
-            `)}
+          <div class="channel-experience">
+            <div class="split-grid">
+              ${renderSectionAsDonut(section, "Balance entre posting público y conversación privada")}
+              <div class="spotlight-card">
+                <div class="chart-title">Publico vs privado</div>
+                <div class="spotlight-subtitle">X se entiende mejor como mezcla de publicación pública, mentions y outreach por DM.</div>
+                ${renderMetricPillGrid([
+                  { label: "Posts", value: postJobs.length, subtitle: "Posts o threads ya disparados." },
+                  { label: "Mentions", value: mentionJobs.length, subtitle: "Respuestas públicas a menciones activas." },
+                  { label: "DMs", value: dmJobs.length, subtitle: "Outreach o seguimiento por mensaje directo." },
+                  { label: "Impresiones", value: sumJobMetric(jobs, "impressions"), subtitle: "Huella estimada de la conversación." }
+                ])}
+              </div>
+            </div>
+            ${renderTimelineStack(
+              jobs.slice(0, 4).map((job) => ({
+                label: getJobActionType(job) || "x",
+                title: job.title || "Actividad en X",
+                subtitle: job.result_summary || "Interacción ejecutada sobre el canal.",
+                kpis: [`engagement ${getJobMetrics(job).engagements || 0}`, `estado ${job.status || "queued"}`]
+              })),
+              "Todavia no hay actividad reciente en X."
+            )}
           </div>
         `;
       }
 
       function renderMessengerSummarySection(platform) {
         const jobs = getChannelJobsForPlatform(platform.id);
-        const messageJobs = jobs.filter((item) => item.flow?.action_type === "send_message");
-        const commentJobs = jobs.filter((item) => item.flow?.action_type === "reply_comment");
-        const handoffJobs = jobs.filter((item) => item.flow?.action_type === "handoff_agent");
-
+        const section = getChannelSummarySection(platform.id, "messenger_inbox");
+        const messageJobs = jobs.filter((item) => getJobActionType(item) === "send_message");
+        const commentJobs = jobs.filter((item) => getJobActionType(item) === "reply_comment");
+        const handoffJobs = jobs.filter((item) => getJobActionType(item) === "handoff_agent");
         return `
-          <div class="chart-grid">
-            ${buildChannelSectionCard("Inbox de Messenger", `
-              ${renderDonutChart("Mix de conversación", [
-                { label: "Mensajes", value: messageJobs.length, color: "#2563eb" },
-                { label: "Comentarios", value: commentJobs.length, color: "#7c3aed" },
-                { label: "Handoff", value: handoffJobs.length, color: "#f59e0b" }
-              ], { caption: "Trabajo actual del canal" })}
-            `)}
-            ${buildChannelSectionCard("Estado de atención", `
-              ${renderInsightList([
-                { title: "Mensajes enviados", value: `${messageJobs.length}`, subtitle: "Conversaciones disparadas o continuadas en Messenger." },
-                { title: "Comentarios respondidos", value: `${commentJobs.length}`, subtitle: "Replies vinculados al canal o fuente conectada." },
-                { title: "Escalados a humano", value: `${handoffJobs.length}`, subtitle: "Chats transferidos a operador humano." }
-              ])}
-            `)}
+          <div class="channel-experience">
+            <div class="chat-layout">
+              <div class="spotlight-card">
+                <div class="chart-title">Inbox de Messenger</div>
+                <div class="spotlight-subtitle">Se parece a WhatsApp, pero aquí conviene mezclar inbox directo y replies disparados desde comentarios.</div>
+                ${renderConversationPreview([...messageJobs, ...commentJobs], {
+                  emptyMessage: "Todavia no hay conversaciones activas en Messenger.",
+                  channelLabel: "Messenger"
+                })}
+              </div>
+              ${renderSectionAsDonut(section, "Mix entre mensajes, comentarios y handoff")}
+            </div>
+            ${renderMetricPillGrid([
+              { label: "Mensajes", value: getSectionItemValue(section, "messages_sent"), subtitle: "Conversaciones iniciadas o continuadas por inbox." },
+              { label: "Comentarios", value: getSectionItemValue(section, "comments_replied"), subtitle: "Replies ligados a conversación pública." },
+              { label: "Handoffs", value: getSectionItemValue(section, "handoffs"), subtitle: "Chats escalados a operador humano." },
+              { label: "Threads abiertos", value: sumJobMetric(jobs, "openThreads"), subtitle: "Carga activa del inbox de Messenger." }
+            ])}
           </div>
         `;
       }
 
       function renderEmailSummarySection(platform) {
         const jobs = getChannelJobsForPlatform(platform.id);
-        const emailJobs = jobs.filter((item) => item.flow?.action_type === "send_email");
-        const sequenceJobs = jobs.filter((item) => item.flow?.action_type === "send_sequence");
-        const tagJobs = jobs.filter((item) => item.flow?.action_type === "tag_contact");
-
+        const section = getChannelSummarySection(platform.id, "email_operations");
+        const emailJobs = jobs.filter((item) => getJobActionType(item) === "send_email");
+        const sequenceJobs = jobs.filter((item) => getJobActionType(item) === "send_sequence");
+        const tagJobs = jobs.filter((item) => getJobActionType(item) === "tag_contact");
         return `
-          <div class="chart-grid">
-            ${buildChannelSectionCard("Secuencias y volumen", `
-              ${renderDonutChart("Mix de ejecucion email", [
-                { label: "Emails", value: emailJobs.length, color: "#2563eb" },
-                { label: "Secuencias", value: sequenceJobs.length, color: "#7c3aed" },
-                { label: "Tags", value: tagJobs.length, color: "#059669" }
-              ], { caption: "Tipo de job de email" })}
-            `)}
-            ${buildChannelSectionCard("Entregabilidad y reply", `
-              ${renderInsightList([
-                { title: "Emails enviados", value: `${emailJobs.length}`, subtitle: "Mensajes individuales disparados por el canal." },
-                { title: "Secuencias activas", value: `${sequenceJobs.length}`, subtitle: "Flows de follow-up o nurtures en ejecución." },
-                { title: "Contactos etiquetados", value: `${tagJobs.length}`, subtitle: "Operaciones de segmentación y enriquecimiento." }
-              ])}
-            `)}
+          <div class="channel-experience">
+            <div class="pipeline-board">
+              <div class="pipeline-column">
+                <div class="pipeline-kicker">single sends</div>
+                <div class="pipeline-value">${getSectionItemValue(section, "emails_sent")}</div>
+                <div class="pipeline-helper">Volumen de envíos individuales recientes.</div>
+                ${renderMetricPillGrid([
+                  { label: "Open rate", value: averageJobMetric(emailJobs, "openRate"), suffix: "%", subtitle: "Promedio de aperturas en mensajes simples." },
+                  { label: "Click rate", value: averageJobMetric(emailJobs, "clickRate"), suffix: "%", subtitle: "Promedio de clics sobre emails disparados." }
+                ])}
+              </div>
+              <div class="pipeline-column">
+                <div class="pipeline-kicker">sequences</div>
+                <div class="pipeline-value">${getSectionItemValue(section, "sequences_running")}</div>
+                <div class="pipeline-helper">Secuencias y nurtures activos sobre contactos.</div>
+                ${renderTimelineStack(
+                  sequenceJobs.slice(0, 3).map((job) => ({
+                    label: "sequence",
+                    title: job.title || "Secuencia activa",
+                    subtitle: job.result_summary || "Secuencia en ejecución sobre una cohorte.",
+                    kpis: [`step ${getJobMetrics(job).activeStep || 0}`, `reply ${getJobMetrics(job).expectedReplyRate || 0}%`]
+                  })),
+                  "Todavia no hay secuencias activas."
+                )}
+              </div>
+              <div class="pipeline-column">
+                <div class="pipeline-kicker">segmentacion</div>
+                <div class="pipeline-value">${getSectionItemValue(section, "contacts_tagged")}</div>
+                <div class="pipeline-helper">Etiquetado y enriquecimiento para activar campañas.</div>
+                ${renderMetricPillGrid([
+                  { label: "Tag jobs", value: tagJobs.length, subtitle: "Operaciones recientes de segmentación." },
+                  { label: "Reply rate", value: averageJobMetric(emailJobs, "replyRate"), suffix: "%", subtitle: "Promedio de respuesta sobre envíos directos." }
+                ])}
+              </div>
+            </div>
           </div>
         `;
       }
 
       function renderWhatsAppSummarySection(platform) {
         const jobs = getChannelJobsForPlatform(platform.id);
-        const templateJobs = jobs.filter((item) => item.flow?.action_type === "send_template");
-        const replyJobs = jobs.filter((item) => item.flow?.action_type === "reply_message");
-        const handoffJobs = jobs.filter((item) => item.flow?.action_type === "handoff_agent");
-
+        const section = getChannelSummarySection(platform.id, "whatsapp_inbox");
+        const templateJobs = jobs.filter((item) => getJobActionType(item) === "send_template");
+        const replyJobs = jobs.filter((item) => getJobActionType(item) === "reply_message");
+        const handoffJobs = jobs.filter((item) => getJobActionType(item) === "handoff_agent");
         return `
-          <div class="chart-grid">
-            ${buildChannelSectionCard("Conversaciones y templates", `
-              ${renderDonutChart("Operacion de WhatsApp", [
-                { label: "Templates", value: templateJobs.length, color: "#2563eb" },
-                { label: "Replies", value: replyJobs.length, color: "#059669" },
-                { label: "Handoff", value: handoffJobs.length, color: "#f59e0b" }
-              ], { caption: "Mix del inbox y outreach" })}
-            `)}
-            ${buildChannelSectionCard("Inbox operativo", `
-              ${renderInsightList([
-                { title: "Templates enviados", value: `${templateJobs.length}`, subtitle: "Mensajes de apertura o reactivación iniciados por plantilla." },
-                { title: "Mensajes contestados", value: `${replyJobs.length}`, subtitle: "Respuestas hechas dentro de conversaciones existentes." },
-                { title: "Escalados a humano", value: `${handoffJobs.length}`, subtitle: "Conversaciones transferidas a un operador." }
-              ])}
-            `)}
+          <div class="channel-experience">
+            <div class="chat-layout">
+              <div class="spotlight-card">
+                <div class="chart-title">Bandeja de WhatsApp</div>
+                <div class="spotlight-subtitle">WhatsApp debe sentirse como inbox operativo: templates para abrir, replies para resolver y handoff cuando ya requiere humano.</div>
+                ${renderConversationPreview([...replyJobs, ...templateJobs], {
+                  emptyMessage: "Todavia no hay conversaciones recientes en WhatsApp.",
+                  channelLabel: "WhatsApp"
+                })}
+              </div>
+              ${renderSectionAsDonut(section, "Mix entre templates, replies y handoff")}
+            </div>
+            ${renderMetricPillGrid([
+              { label: "Templates", value: getSectionItemValue(section, "templates_sent"), subtitle: "Mensajes de apertura o reactivación." },
+              { label: "Replies", value: getSectionItemValue(section, "messages_replied"), subtitle: "Mensajes respondidos dentro de conversaciones activas." },
+              { label: "Handoffs", value: getSectionItemValue(section, "handoffs"), subtitle: "Conversaciones derivadas a operador." },
+              { label: "Resolved chats", value: sumJobMetric(replyJobs, "resolvedChats"), subtitle: "Casos cerrados desde el inbox." }
+            ])}
           </div>
         `;
       }
@@ -1295,21 +1863,36 @@
         const realtimeFlows = flows.filter((item) => item.mode === "realtime").length;
 
         return `
-          <div class="chart-grid">
-            ${buildChannelSectionCard("Modos de voz", `
-              ${renderDonutChart("Flows por modo", [
-                { label: "DTMF", value: dtmfFlows, color: "#2563eb" },
-                { label: "AI", value: aiFlows, color: "#7c3aed" },
-                { label: "Realtime", value: realtimeFlows, color: "#059669" }
-              ], { caption: "Distribucion de flows de voz" })}
-            `)}
-            ${buildChannelSectionCard("Operacion de llamadas", `
-              ${renderInsightList([
-                { title: "Intentos de llamada", value: `${jobs.length}`, subtitle: "Jobs de voz creados para llamar contactos o leads." },
-                { title: "Con outcome util", value: `${jobs.filter((item) => item.outcome === "confirmed" || item.outcome === "callback").length}`, subtitle: "Llamadas que terminaron en confirmación o callback." },
-                { title: "Con transcript", value: `${jobs.filter((item) => item.transcript).length}`, subtitle: "Llamadas con rastro de conversación disponible para revisar." }
-              ])}
-            `)}
+          <div class="channel-experience">
+            <div class="split-grid">
+              ${buildChannelSectionCard("Modos de voz", `
+                ${renderDonutChart("Flows por modo", [
+                  { label: "DTMF", value: dtmfFlows, color: "#2563eb" },
+                  { label: "AI", value: aiFlows, color: "#7c3aed" },
+                  { label: "Realtime", value: realtimeFlows, color: "#059669" }
+                ], { caption: "Distribucion de flows de voz" })}
+              `)}
+              <div class="spotlight-card">
+                <div class="chart-title">Rastro conversacional</div>
+                <div class="spotlight-subtitle">Voice debe mostrar transcript y outcomes, no solo conteos de jobs. Aquí se separa del resto del dashboard.</div>
+                ${jobs.find((item) => item.transcript)
+                  ? `<div class="voice-transcript">${jobs.filter((item) => item.transcript).slice(0, 1).map((job) => String(job.transcript || "").split("\n").slice(0, 4).map((line) => `<div class="voice-transcript-line">${escapeHtml(line)}</div>`).join("")).join("")}</div>`
+                  : `<div class="empty-state"><div class="empty">Todavia no hay transcript disponible para mostrar.</div></div>`}
+              </div>
+            </div>
+            ${renderTimelineStack(
+              jobs.slice(0, 4).map((job) => ({
+                label: job.status || "call",
+                title: job.flow?.name || job.title || "Voice job",
+                subtitle: job.result_summary || job.outcome || "Llamada ejecutada desde el backend.",
+                kpis: [
+                  `outcome ${job.outcome || "n/a"}`,
+                  `duracion ${job.duration_seconds || 0}s`,
+                  job.transcript ? "con transcript" : "sin transcript"
+                ]
+              })),
+              "Todavia no hay llamadas recientes para revisar."
+            )}
           </div>
         `;
       }

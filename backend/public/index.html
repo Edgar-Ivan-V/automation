@@ -955,6 +955,8 @@
               ${renderRingGrid(analytics.healthRings)}
             </div>
 
+            ${renderChannelSpecificSummary(platform)}
+
             <div class="chart-grid">
               <div class="section-card">
                 <div class="chart-title">Cuentas conectadas</div>
@@ -1011,6 +1013,330 @@
             </div>
           </div>
         `).join("");
+      }
+
+      function getChannelJobsForPlatform(platformId) {
+        if (platformId === "phone") return state.snapshot?.jobs ?? [];
+        return (state.channelSnapshot?.jobs ?? []).filter((item) => item.channel === platformId);
+      }
+
+      function getChannelFlowsForPlatform(platformId) {
+        if (platformId === "phone") return state.snapshot?.flows ?? [];
+        return (state.channelSnapshot?.flows ?? []).filter((item) => item.channel === platformId);
+      }
+
+      function countByAction(jobs, actionType) {
+        return jobs.filter((item) => {
+          const flow = item.flow || null;
+          return flow?.action_type === actionType || item.action_type === actionType;
+        }).length;
+      }
+
+      function buildChannelSectionCard(title, body) {
+        return `
+          <div class="section-card">
+            <div class="chart-title">${escapeHtml(title)}</div>
+            ${body}
+          </div>
+        `;
+      }
+
+      function buildSimpleList(items, emptyMessage) {
+        if (!items.length) {
+          return `<div class="empty-state"><div class="empty">${escapeHtml(emptyMessage)}</div></div>`;
+        }
+        return items.map((item) => `
+          <div class="list-card">
+            <div class="item-row">
+              <div>
+                <div class="item-title">${escapeHtml(item.title)}</div>
+                <div class="item-sub">${escapeHtml(item.subtitle || "")}</div>
+              </div>
+              ${item.badge ? `<div class="badge ${item.badgeTone || "info"}">${escapeHtml(item.badge)}</div>` : ""}
+            </div>
+          </div>
+        `).join("");
+      }
+
+      function renderInstagramSummarySection(platform) {
+        const jobs = getChannelJobsForPlatform(platform.id);
+        const imageJobs = jobs.filter((item) => item.flow?.action_type === "publish_post");
+        const storyJobs = jobs.filter((item) => item.flow?.action_type === "publish_story");
+        const reelJobs = jobs.filter((item) => item.flow?.action_type === "publish_reel");
+        const dmJobs = jobs.filter((item) => item.flow?.action_type === "reply_dm");
+
+        return `
+          <div class="chart-grid">
+            ${buildChannelSectionCard("Imagenes subidas", `
+              ${renderDonutChart("Mix de assets de Instagram", [
+                { label: "Feed", value: imageJobs.length, color: "#2563eb" },
+                { label: "Stories", value: storyJobs.length, color: "#ec4899" },
+                { label: "Reels", value: reelJobs.length, color: "#7c3aed" }
+              ], { caption: "Piezas publicadas por formato" })}
+              ${buildSimpleList(
+                imageJobs.slice(0, 4).map((job) => ({
+                  title: job.title || "Imagen publicada",
+                  subtitle: job.result_summary || job.target_ref || "Asset de feed o carrusel listo para revisar",
+                  badge: job.status,
+                  badgeTone: job.status === "completed" ? "ok" : "warn"
+                })),
+                "Todavia no hay imagenes publicadas en Instagram."
+              )}
+            `)}
+            ${buildChannelSectionCard("Reels y DMs", `
+              ${renderInsightList([
+                { title: "Reels publicados", value: `${reelJobs.length}`, subtitle: "Videos cortos que ya pasaron por el flujo de publicacion." },
+                { title: "Stories activadas", value: `${storyJobs.length}`, subtitle: "Piezas efimeras que deberian medirse por taps y replies." },
+                { title: "DMs contestados", value: `${dmJobs.length}`, subtitle: "Conversaciones atendidas desde inbox de Instagram." }
+              ])}
+            `)}
+          </div>
+        `;
+      }
+
+      function renderAutomationsSummarySection(platform) {
+        const jobs = getChannelJobsForPlatform(platform.id);
+        const workflowJobs = jobs.filter((item) => item.flow?.action_type === "workflow_run");
+        const routingJobs = jobs.filter((item) => item.flow?.action_type === "lead_routing");
+        const crmJobs = jobs.filter((item) => item.flow?.action_type === "crm_update");
+
+        return `
+          <div class="chart-grid">
+            ${buildChannelSectionCard("Procesos internos", `
+              ${renderDonutChart("Mix de automatizaciones", [
+                { label: "Workflow run", value: workflowJobs.length, color: "#2563eb" },
+                { label: "Lead routing", value: routingJobs.length, color: "#7c3aed" },
+                { label: "CRM update", value: crmJobs.length, color: "#059669" }
+              ], { caption: "Tipo de proceso interno ejecutado" })}
+            `)}
+            ${buildChannelSectionCard("Estado del orchestration layer", `
+              ${renderInsightList([
+                { title: "Workflows corridos", value: `${workflowJobs.length}`, subtitle: "Ejecuciones de procesos internos o encadenados." },
+                { title: "Leads ruteados", value: `${routingJobs.length}`, subtitle: "Casos enviados a owners, equipos o colas." },
+                { title: "CRM updates", value: `${crmJobs.length}`, subtitle: "Acciones de sincronización o cambio de etapa." }
+              ])}
+            `)}
+          </div>
+        `;
+      }
+
+      function renderFacebookSummarySection(platform) {
+        const jobs = getChannelJobsForPlatform(platform.id);
+        const postJobs = jobs.filter((item) => item.flow?.action_type === "publish_post");
+        const commentJobs = jobs.filter((item) => item.flow?.action_type === "reply_comment");
+        const dmJobs = jobs.filter((item) => item.flow?.action_type === "reply_dm");
+        const leadJobs = jobs.filter((item) => item.flow?.action_type === "capture_lead");
+
+        return `
+          <div class="chart-grid">
+            ${buildChannelSectionCard("Publicacion y conversación", `
+              ${renderDonutChart("Mix de Facebook", [
+                { label: "Posts", value: postJobs.length, color: "#2563eb" },
+                { label: "Comentarios", value: commentJobs.length, color: "#7c3aed" },
+                { label: "DMs", value: dmJobs.length, color: "#059669" },
+                { label: "Leads", value: leadJobs.length, color: "#f59e0b" }
+              ], { caption: "Trabajo ejecutado en el canal" })}
+            `)}
+            ${buildChannelSectionCard("Contenido y leads", `
+              ${renderInsightList([
+                { title: "Posts publicados", value: `${postJobs.length}`, subtitle: "Piezas de feed ya ejecutadas." },
+                { title: "Comentarios contestados", value: `${commentJobs.length}`, subtitle: "Replies hechos sobre publicaciones del canal." },
+                { title: "Leads capturados", value: `${leadJobs.length}`, subtitle: "Interacciones convertidas en lead u oportunidad." }
+              ])}
+            `)}
+          </div>
+        `;
+      }
+
+      function renderTikTokSummarySection(platform) {
+        const jobs = getChannelJobsForPlatform(platform.id);
+        const videoJobs = jobs.filter((item) => item.flow?.action_type === "publish_video");
+        const commentJobs = jobs.filter((item) => item.flow?.action_type === "reply_comment");
+        const leadJobs = jobs.filter((item) => item.flow?.action_type === "capture_lead");
+
+        return `
+          <div class="chart-grid">
+            ${buildChannelSectionCard("Videos subidos", `
+              ${renderDonutChart("Estado de videos", [
+                { label: "Publicados", value: videoJobs.filter((item) => item.status === "completed").length, color: "#2563eb" },
+                { label: "En proceso", value: videoJobs.filter((item) => item.status === "running" || item.status === "queued").length, color: "#7c3aed" },
+                { label: "Bloqueados", value: videoJobs.filter((item) => item.status === "failed" || item.status === "requires_auth").length, color: "#f59e0b" }
+              ], { caption: "Inventario de video por estado" })}
+              ${buildSimpleList(
+                videoJobs.slice(0, 4).map((job) => ({
+                  title: job.title || "Video subido",
+                  subtitle: job.result_summary || job.target_ref || "Video listo para revisar performance",
+                  badge: job.status,
+                  badgeTone: job.status === "completed" ? "ok" : "warn"
+                })),
+                "Todavia no hay videos subidos en TikTok."
+              )}
+            `)}
+            ${buildChannelSectionCard("Comentarios y leads", `
+              ${renderInsightList([
+                { title: "Comentarios contestados", value: `${commentJobs.length}`, subtitle: "Volumen de replies sobre comentarios del canal." },
+                { title: "Leads capturados", value: `${leadJobs.length}`, subtitle: "Contactos u oportunidades originadas desde TikTok." },
+                { title: "Mensajes contestados", value: "0", subtitle: "Previsto para una fase posterior cuando exista inbox dedicado." }
+              ])}
+            `)}
+          </div>
+        `;
+      }
+
+      function renderXSummarySection(platform) {
+        const jobs = getChannelJobsForPlatform(platform.id);
+        const postJobs = jobs.filter((item) => item.flow?.action_type === "publish_post");
+        const mentionJobs = jobs.filter((item) => item.flow?.action_type === "reply_mention");
+        const dmJobs = jobs.filter((item) => item.flow?.action_type === "send_dm");
+
+        return `
+          <div class="chart-grid">
+            ${buildChannelSectionCard("Posts, mentions y DMs", `
+              ${renderDonutChart("Operacion en X", [
+                { label: "Posts", value: postJobs.length, color: "#0f172a" },
+                { label: "Mentions", value: mentionJobs.length, color: "#2563eb" },
+                { label: "DMs", value: dmJobs.length, color: "#7c3aed" }
+              ], { caption: "Tipo de interacción dominante" })}
+            `)}
+            ${buildChannelSectionCard("Conversación publica", `
+              ${renderInsightList([
+                { title: "Posts publicados", value: `${postJobs.length}`, subtitle: "Publicaciones simples o threads lanzados desde el canal." },
+                { title: "Mentions respondidas", value: `${mentionJobs.length}`, subtitle: "Respuestas hechas a menciones o hilos activos." },
+                { title: "DMs enviados", value: `${dmJobs.length}`, subtitle: "Mensajes privados iniciados o continuados desde X." }
+              ])}
+            `)}
+          </div>
+        `;
+      }
+
+      function renderMessengerSummarySection(platform) {
+        const jobs = getChannelJobsForPlatform(platform.id);
+        const messageJobs = jobs.filter((item) => item.flow?.action_type === "send_message");
+        const commentJobs = jobs.filter((item) => item.flow?.action_type === "reply_comment");
+        const handoffJobs = jobs.filter((item) => item.flow?.action_type === "handoff_agent");
+
+        return `
+          <div class="chart-grid">
+            ${buildChannelSectionCard("Inbox de Messenger", `
+              ${renderDonutChart("Mix de conversación", [
+                { label: "Mensajes", value: messageJobs.length, color: "#2563eb" },
+                { label: "Comentarios", value: commentJobs.length, color: "#7c3aed" },
+                { label: "Handoff", value: handoffJobs.length, color: "#f59e0b" }
+              ], { caption: "Trabajo actual del canal" })}
+            `)}
+            ${buildChannelSectionCard("Estado de atención", `
+              ${renderInsightList([
+                { title: "Mensajes enviados", value: `${messageJobs.length}`, subtitle: "Conversaciones disparadas o continuadas en Messenger." },
+                { title: "Comentarios respondidos", value: `${commentJobs.length}`, subtitle: "Replies vinculados al canal o fuente conectada." },
+                { title: "Escalados a humano", value: `${handoffJobs.length}`, subtitle: "Chats transferidos a operador humano." }
+              ])}
+            `)}
+          </div>
+        `;
+      }
+
+      function renderEmailSummarySection(platform) {
+        const jobs = getChannelJobsForPlatform(platform.id);
+        const emailJobs = jobs.filter((item) => item.flow?.action_type === "send_email");
+        const sequenceJobs = jobs.filter((item) => item.flow?.action_type === "send_sequence");
+        const tagJobs = jobs.filter((item) => item.flow?.action_type === "tag_contact");
+
+        return `
+          <div class="chart-grid">
+            ${buildChannelSectionCard("Secuencias y volumen", `
+              ${renderDonutChart("Mix de ejecucion email", [
+                { label: "Emails", value: emailJobs.length, color: "#2563eb" },
+                { label: "Secuencias", value: sequenceJobs.length, color: "#7c3aed" },
+                { label: "Tags", value: tagJobs.length, color: "#059669" }
+              ], { caption: "Tipo de job de email" })}
+            `)}
+            ${buildChannelSectionCard("Entregabilidad y reply", `
+              ${renderInsightList([
+                { title: "Emails enviados", value: `${emailJobs.length}`, subtitle: "Mensajes individuales disparados por el canal." },
+                { title: "Secuencias activas", value: `${sequenceJobs.length}`, subtitle: "Flows de follow-up o nurtures en ejecución." },
+                { title: "Contactos etiquetados", value: `${tagJobs.length}`, subtitle: "Operaciones de segmentación y enriquecimiento." }
+              ])}
+            `)}
+          </div>
+        `;
+      }
+
+      function renderWhatsAppSummarySection(platform) {
+        const jobs = getChannelJobsForPlatform(platform.id);
+        const templateJobs = jobs.filter((item) => item.flow?.action_type === "send_template");
+        const replyJobs = jobs.filter((item) => item.flow?.action_type === "reply_message");
+        const handoffJobs = jobs.filter((item) => item.flow?.action_type === "handoff_agent");
+
+        return `
+          <div class="chart-grid">
+            ${buildChannelSectionCard("Conversaciones y templates", `
+              ${renderDonutChart("Operacion de WhatsApp", [
+                { label: "Templates", value: templateJobs.length, color: "#2563eb" },
+                { label: "Replies", value: replyJobs.length, color: "#059669" },
+                { label: "Handoff", value: handoffJobs.length, color: "#f59e0b" }
+              ], { caption: "Mix del inbox y outreach" })}
+            `)}
+            ${buildChannelSectionCard("Inbox operativo", `
+              ${renderInsightList([
+                { title: "Templates enviados", value: `${templateJobs.length}`, subtitle: "Mensajes de apertura o reactivación iniciados por plantilla." },
+                { title: "Mensajes contestados", value: `${replyJobs.length}`, subtitle: "Respuestas hechas dentro de conversaciones existentes." },
+                { title: "Escalados a humano", value: `${handoffJobs.length}`, subtitle: "Conversaciones transferidas a un operador." }
+              ])}
+            `)}
+          </div>
+        `;
+      }
+
+      function renderVoiceSummarySection(platform) {
+        const jobs = getChannelJobsForPlatform(platform.id);
+        const flows = getChannelFlowsForPlatform(platform.id);
+        const dtmfFlows = flows.filter((item) => (item.mode || "dtmf") === "dtmf").length;
+        const aiFlows = flows.filter((item) => item.mode === "ai").length;
+        const realtimeFlows = flows.filter((item) => item.mode === "realtime").length;
+
+        return `
+          <div class="chart-grid">
+            ${buildChannelSectionCard("Modos de voz", `
+              ${renderDonutChart("Flows por modo", [
+                { label: "DTMF", value: dtmfFlows, color: "#2563eb" },
+                { label: "AI", value: aiFlows, color: "#7c3aed" },
+                { label: "Realtime", value: realtimeFlows, color: "#059669" }
+              ], { caption: "Distribucion de flows de voz" })}
+            `)}
+            ${buildChannelSectionCard("Operacion de llamadas", `
+              ${renderInsightList([
+                { title: "Intentos de llamada", value: `${jobs.length}`, subtitle: "Jobs de voz creados para llamar contactos o leads." },
+                { title: "Con outcome util", value: `${jobs.filter((item) => item.outcome === "confirmed" || item.outcome === "callback").length}`, subtitle: "Llamadas que terminaron en confirmación o callback." },
+                { title: "Con transcript", value: `${jobs.filter((item) => item.transcript).length}`, subtitle: "Llamadas con rastro de conversación disponible para revisar." }
+              ])}
+            `)}
+          </div>
+        `;
+      }
+
+      function renderChannelSpecificSummary(platform) {
+        switch (platform.id) {
+          case "automations":
+            return renderAutomationsSummarySection(platform);
+          case "facebook":
+            return renderFacebookSummarySection(platform);
+          case "instagram":
+            return renderInstagramSummarySection(platform);
+          case "x":
+            return renderXSummarySection(platform);
+          case "tiktok":
+            return renderTikTokSummarySection(platform);
+          case "email":
+            return renderEmailSummarySection(platform);
+          case "whatsapp":
+            return renderWhatsAppSummarySection(platform);
+          case "messenger":
+            return renderMessengerSummarySection(platform);
+          case "phone":
+            return renderVoiceSummarySection(platform);
+          default:
+            return "";
+        }
       }
 
       function renderAccounts() {

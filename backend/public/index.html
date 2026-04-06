@@ -1644,10 +1644,10 @@
         const leadJobs = jobs.filter((item) => getJobActionType(item) === "capture_lead");
         return `
           <div class="channel-experience">
-            <div class="showcase-grid">
+            <div class="chat-layout">
               <div class="spotlight-card">
-                <div class="chart-title">Contenido y comunidad</div>
-                <div class="spotlight-subtitle">Facebook mezcla feed, comentarios y DMs. Conviene mostrar comunidad y captura de lead en un mismo panel.</div>
+                <div class="chart-title">Community desk de Facebook</div>
+                <div class="spotlight-subtitle">Facebook vive entre comunidad pública y conversación privada. Esta vista junta contenido, comentarios y potencial comercial en una sola mesa.</div>
                 ${renderAssetGallery(postJobs, {
                   emptyMessage: "Todavia no hay posts publicados en Facebook.",
                   statKeys: ["reach", "reactions", "comments", "leads"],
@@ -1655,7 +1655,26 @@
                   limit: 2
                 })}
               </div>
+              <div class="spotlight-card">
+                <div class="chart-title">Conversación y captura</div>
+                <div class="spotlight-subtitle">Aquí sí conviene ver replies y leads juntos, porque suelen venir de la misma publicación o thread.</div>
+                ${renderConversationPreview([...commentJobs, ...dmJobs], {
+                  emptyMessage: "Todavia no hay comentarios o DMs recientes en Facebook.",
+                  channelLabel: "Facebook"
+                })}
+              </div>
+            </div>
+            <div class="split-grid">
               ${renderSectionAsDonut(section, "Operacion entre posts, comentarios, DMs y leads")}
+              ${renderTimelineStack(
+                leadJobs.slice(0, 4).map((job) => ({
+                  label: "lead",
+                  title: job.title || "Lead capturado",
+                  subtitle: job.result_summary || "Contacto originado desde interacción social.",
+                  kpis: [`score ${getJobMetrics(job).qualificationScore || 0}`, `estado ${job.status || "queued"}`]
+                })),
+                "Todavia no hay leads recientes desde Facebook."
+              )}
             </div>
             ${renderMetricPillGrid([
               { label: "Comentarios replied", value: commentJobs.length, subtitle: "Replies ya ejecutados sobre posts del canal." },
@@ -1725,11 +1744,26 @@
         const dmJobs = jobs.filter((item) => getJobActionType(item) === "send_dm");
         return `
           <div class="channel-experience">
-            <div class="split-grid">
-              ${renderSectionAsDonut(section, "Balance entre posting público y conversación privada")}
+            <div class="showcase-grid">
               <div class="spotlight-card">
-                <div class="chart-title">Publico vs privado</div>
-                <div class="spotlight-subtitle">X se entiende mejor como mezcla de publicación pública, mentions y outreach por DM.</div>
+                <div class="chart-title">War room de X</div>
+                <div class="spotlight-subtitle">X funciona mejor como sala de monitoreo: posts, menciones y outreach viven en tiempo casi real y deben leerse como un frente de conversación.</div>
+                ${renderTimelineStack(
+                  [...postJobs, ...mentionJobs].slice(0, 4).map((job) => ({
+                    label: getJobActionType(job) || "x",
+                    title: job.title || "Actividad en X",
+                    subtitle: job.result_summary || "Movimiento público ejecutado en el canal.",
+                    kpis: [`engagement ${getJobMetrics(job).engagements || 0}`, `estado ${job.status || "queued"}`]
+                  })),
+                  "Todavia no hay actividad pública reciente en X."
+                )}
+              </div>
+              ${renderSectionAsDonut(section, "Balance entre posting público y conversación privada")}
+            </div>
+            <div class="split-grid">
+              <div class="spotlight-card">
+                <div class="chart-title">Outreach privado</div>
+                <div class="spotlight-subtitle">Los DMs en X suelen ser seguimiento, no inbox pesado. Aquí importa ver volumen y foco más que una bandeja completa.</div>
                 ${renderMetricPillGrid([
                   { label: "Posts", value: postJobs.length, subtitle: "Posts o threads ya disparados." },
                   { label: "Mentions", value: mentionJobs.length, subtitle: "Respuestas públicas a menciones activas." },
@@ -1737,16 +1771,11 @@
                   { label: "Impresiones", value: sumJobMetric(jobs, "impressions"), subtitle: "Huella estimada de la conversación." }
                 ])}
               </div>
+              ${renderConversationPreview(dmJobs, {
+                emptyMessage: "Todavia no hay DMs recientes en X.",
+                channelLabel: "X"
+              })}
             </div>
-            ${renderTimelineStack(
-              jobs.slice(0, 4).map((job) => ({
-                label: getJobActionType(job) || "x",
-                title: job.title || "Actividad en X",
-                subtitle: job.result_summary || "Interacción ejecutada sobre el canal.",
-                kpis: [`engagement ${getJobMetrics(job).engagements || 0}`, `estado ${job.status || "queued"}`]
-              })),
-              "Todavia no hay actividad reciente en X."
-            )}
           </div>
         `;
       }
@@ -1788,37 +1817,42 @@
         const tagJobs = jobs.filter((item) => getJobActionType(item) === "tag_contact");
         return `
           <div class="channel-experience">
-            <div class="pipeline-board">
-              <div class="pipeline-column">
-                <div class="pipeline-kicker">single sends</div>
-                <div class="pipeline-value">${getSectionItemValue(section, "emails_sent")}</div>
-                <div class="pipeline-helper">Volumen de envíos individuales recientes.</div>
+            <div class="showcase-grid">
+              <div class="spotlight-card">
+                <div class="spotlight-header">
+                  <div>
+                    <div class="chart-title">Campaign cockpit</div>
+                    <div class="spotlight-subtitle">Email no debería verse como inbox ni como social feed. Aquí importan entregabilidad, cohortes y secuencias en paralelo.</div>
+                  </div>
+                  <div class="badge info">Pipeline</div>
+                </div>
                 ${renderMetricPillGrid([
+                  { label: "Emails", value: getSectionItemValue(section, "emails_sent"), subtitle: "Volumen de envíos individuales recientes." },
                   { label: "Open rate", value: averageJobMetric(emailJobs, "openRate"), suffix: "%", subtitle: "Promedio de aperturas en mensajes simples." },
-                  { label: "Click rate", value: averageJobMetric(emailJobs, "clickRate"), suffix: "%", subtitle: "Promedio de clics sobre emails disparados." }
+                  { label: "Click rate", value: averageJobMetric(emailJobs, "clickRate"), suffix: "%", subtitle: "Promedio de clics sobre emails disparados." },
+                  { label: "Reply rate", value: averageJobMetric(emailJobs, "replyRate"), suffix: "%", subtitle: "Promedio de respuesta sobre envíos directos." }
                 ])}
               </div>
-              <div class="pipeline-column">
-                <div class="pipeline-kicker">sequences</div>
-                <div class="pipeline-value">${getSectionItemValue(section, "sequences_running")}</div>
-                <div class="pipeline-helper">Secuencias y nurtures activos sobre contactos.</div>
-                ${renderTimelineStack(
-                  sequenceJobs.slice(0, 3).map((job) => ({
-                    label: "sequence",
-                    title: job.title || "Secuencia activa",
-                    subtitle: job.result_summary || "Secuencia en ejecución sobre una cohorte.",
-                    kpis: [`step ${getJobMetrics(job).activeStep || 0}`, `reply ${getJobMetrics(job).expectedReplyRate || 0}%`]
-                  })),
-                  "Todavia no hay secuencias activas."
-                )}
-              </div>
-              <div class="pipeline-column">
-                <div class="pipeline-kicker">segmentacion</div>
-                <div class="pipeline-value">${getSectionItemValue(section, "contacts_tagged")}</div>
-                <div class="pipeline-helper">Etiquetado y enriquecimiento para activar campañas.</div>
+              ${renderSectionAsDonut(section, "Mix entre sends, sequences y tagging")}
+            </div>
+            <div class="split-grid">
+              ${renderTimelineStack(
+                sequenceJobs.slice(0, 4).map((job) => ({
+                  label: "sequence",
+                  title: job.title || "Secuencia activa",
+                  subtitle: job.result_summary || "Secuencia en ejecución sobre una cohorte.",
+                  kpis: [`step ${getJobMetrics(job).activeStep || 0}`, `reply ${getJobMetrics(job).expectedReplyRate || 0}%`]
+                })),
+                "Todavia no hay secuencias activas."
+              )}
+              <div class="spotlight-card">
+                <div class="chart-title">Segmentación y cohorts</div>
+                <div class="spotlight-subtitle">El tercer bloque de email no es otro gráfico. Aquí tiene más sentido ver cohortes movidas por tags y activación de campañas.</div>
                 ${renderMetricPillGrid([
-                  { label: "Tag jobs", value: tagJobs.length, subtitle: "Operaciones recientes de segmentación." },
-                  { label: "Reply rate", value: averageJobMetric(emailJobs, "replyRate"), suffix: "%", subtitle: "Promedio de respuesta sobre envíos directos." }
+                  { label: "Tags", value: getSectionItemValue(section, "contacts_tagged"), subtitle: "Contactos movidos por segmentación." },
+                  { label: "Tag jobs", value: tagJobs.length, subtitle: "Operaciones recientes de tagging." },
+                  { label: "Secuencias", value: getSectionItemValue(section, "sequences_running"), subtitle: "Nurtures activos sobre cohorts." },
+                  { label: "Enrolled", value: sumJobMetric(sequenceJobs, "enrolledContacts"), subtitle: "Contactos actualmente enrolados en secuencias." }
                 ])}
               </div>
             </div>

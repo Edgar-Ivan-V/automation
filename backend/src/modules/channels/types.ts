@@ -29,6 +29,7 @@ export type ChannelAccountStatus = "draft" | "connected" | "disconnected" | "err
 export type ChannelBotStatus = "draft" | "active" | "paused";
 export type ChannelJobStatus = "draft" | "queued" | "scheduled" | "running" | "completed" | "failed" | "canceled" | "requires_auth";
 export type ChannelJobOutcome = "published" | "sent" | "replied" | "lead_captured" | "scheduled" | "manual_review" | "unknown";
+export type ChannelAgentType = "dm_responder" | "comment_responder" | "publisher" | "ads_operator";
 
 export interface ChannelAccount {
   id: string;
@@ -121,6 +122,32 @@ export interface ChannelActionDefinition {
   description: string;
 }
 
+export interface ChannelTriggerDefinition {
+  trigger_type: string;
+  label: string;
+  description: string;
+}
+
+export interface ChannelAgentConfigFieldOption {
+  value: string;
+  label: string;
+}
+
+export interface ChannelAgentConfigFieldDefinition {
+  key: string;
+  label: string;
+  description?: string;
+  options: ChannelAgentConfigFieldOption[];
+}
+
+export interface ChannelAgentTypeDefinition {
+  agent_type: ChannelAgentType;
+  label: string;
+  description: string;
+  allowed_action_types: string[];
+  config_fields: ChannelAgentConfigFieldDefinition[];
+}
+
 export interface ChannelSummaryMetric {
   key: string;
   label: string;
@@ -180,6 +207,7 @@ export interface CreateChannelAgentInput {
   accountId: string;
   channel: ChannelKind;
   name: string;
+  agentType?: ChannelAgentType;
   objective?: string;
   personaPrompt?: string;
   status?: ChannelBotStatus;
@@ -188,6 +216,7 @@ export interface CreateChannelAgentInput {
 
 export interface UpdateChannelAgentInput {
   name?: string;
+  agentType?: ChannelAgentType;
   objective?: string;
   personaPrompt?: string;
   status?: ChannelBotStatus;

@@ -653,6 +653,7 @@
                 </form>
 
                 <div id="accountsList" class="accounts-list" style="margin-top: 16px;"></div>
+                <div id="accountActionsPanel" style="margin-top: 16px;"></div>
               </div>
             </aside>
 
@@ -744,6 +745,7 @@
       const accountsSubtitle = document.getElementById("accountsSubtitle");
       const accountsCount = document.getElementById("accountsCount");
       const accountsList = document.getElementById("accountsList");
+      const accountActionsPanel = document.getElementById("accountActionsPanel");
       const detailRoot = document.getElementById("detailRoot");
       const selectedPlatformBadge = document.getElementById("selectedPlatformBadge");
       const addAccountForm = document.getElementById("addAccountForm");
@@ -788,6 +790,22 @@
 
       function getChannelActions(platformId = state.selectedPlatformId) {
         return getGenericSnapshot().channels?.[platformId]?.actions ?? [];
+      }
+
+      function getChannelTriggers(platformId = state.selectedPlatformId) {
+        return getGenericSnapshot().channels?.[platformId]?.triggers ?? [];
+      }
+
+      function getChannelAgentTypes(platformId = state.selectedPlatformId) {
+        return getGenericSnapshot().channels?.[platformId]?.agentTypes ?? [];
+      }
+
+      function getAgentTypeDefinition(platformId, agentType) {
+        return getChannelAgentTypes(platformId).find((item) => item.agent_type === agentType) || null;
+      }
+
+      function getAgentTypeLabel(platformId, agentType) {
+        return getAgentTypeDefinition(platformId, agentType)?.label || "Tipo no definido";
       }
 
       function syncAccountsFromChannels() {
@@ -1571,6 +1589,7 @@
         const storyJobs = jobs.filter((item) => getJobActionType(item) === "publish_story");
         const reelJobs = jobs.filter((item) => getJobActionType(item) === "publish_reel");
         const dmJobs = jobs.filter((item) => getJobActionType(item) === "reply_dm");
+        const mediaJobs = jobs.filter((item) => getJobActionType(item) === "send_media");
         const totalReach = sumJobMetric(imageJobs, "reach") + sumJobMetric(storyJobs, "impressions") + sumJobMetric(reelJobs, "plays");
         return `
           <div class="channel-experience">
@@ -1595,6 +1614,7 @@
               { label: "Reach total", value: totalReach, subtitle: "Suma de reach, impressions y plays en assets recientes." },
               { label: "Saves", value: sumJobMetric(imageJobs, "saves") + sumJobMetric(reelJobs, "saves"), subtitle: "Señal de intención y valor guardable." },
               { label: "Shares", value: sumJobMetric(imageJobs, "shares") + sumJobMetric(reelJobs, "shares"), subtitle: "Distribución orgánica empujada por el contenido." },
+              { label: "Media sent", value: getSectionItemValue(summarySection, "media_sent") || mediaJobs.length, subtitle: "Assets enviados por DM dentro del canal." },
               { label: "DMs replied", value: getSectionItemValue(summarySection, "dms_replied") || dmJobs.length, subtitle: "Conversaciones privadas atendidas desde el canal." }
             ])}
           </div>
@@ -1641,6 +1661,7 @@
         const postJobs = jobs.filter((item) => getJobActionType(item) === "publish_post");
         const commentJobs = jobs.filter((item) => getJobActionType(item) === "reply_comment");
         const dmJobs = jobs.filter((item) => getJobActionType(item) === "reply_dm");
+        const mediaJobs = jobs.filter((item) => getJobActionType(item) === "send_media");
         const leadJobs = jobs.filter((item) => getJobActionType(item) === "capture_lead");
         return `
           <div class="channel-experience">
@@ -1658,7 +1679,7 @@
               <div class="spotlight-card">
                 <div class="chart-title">Conversación y captura</div>
                 <div class="spotlight-subtitle">Aquí sí conviene ver replies y leads juntos, porque suelen venir de la misma publicación o thread.</div>
-                ${renderConversationPreview([...commentJobs, ...dmJobs], {
+                ${renderConversationPreview([...commentJobs, ...dmJobs, ...mediaJobs], {
                   emptyMessage: "Todavia no hay comentarios o DMs recientes en Facebook.",
                   channelLabel: "Facebook"
                 })}
@@ -1679,6 +1700,7 @@
             ${renderMetricPillGrid([
               { label: "Comentarios replied", value: commentJobs.length, subtitle: "Replies ya ejecutados sobre posts del canal." },
               { label: "DMs replied", value: dmJobs.length, subtitle: "Conversaciones privadas atendidas." },
+              { label: "Media sent", value: getSectionItemValue(section, "media_sent") || mediaJobs.length, subtitle: "Assets enviados por inbox o seguimiento." },
               { label: "Leads", value: leadJobs.length, subtitle: "Interacciones convertidas en oportunidad." },
               { label: "Reach", value: sumJobMetric(postJobs, "reach"), subtitle: "Cobertura estimada del contenido publicado." }
             ])}
@@ -1728,6 +1750,7 @@
                   { label: "Views", value: sumJobMetric(videoJobs, "views"), subtitle: "Volumen acumulado de reproducciones." },
                   { label: "Completion", value: averageJobMetric(videoJobs, "completionRate"), suffix: "%", subtitle: "Retención media de los videos recientes." },
                   { label: "Shares", value: sumJobMetric(videoJobs, "shares"), subtitle: "Señal de distribución orgánica." },
+                  { label: "Media sent", value: getSectionItemValue(section, "media_sent"), subtitle: "Assets enviados fuera del feed para outreach o activación." },
                   { label: "Leads", value: leadJobs.length, subtitle: "Captura originada en comentarios o respuesta directa." }
                 ])}
               </div>
@@ -1742,6 +1765,7 @@
         const postJobs = jobs.filter((item) => getJobActionType(item) === "publish_post");
         const mentionJobs = jobs.filter((item) => getJobActionType(item) === "reply_mention");
         const dmJobs = jobs.filter((item) => getJobActionType(item) === "send_dm");
+        const mediaJobs = jobs.filter((item) => getJobActionType(item) === "send_media");
         return `
           <div class="channel-experience">
             <div class="showcase-grid">
@@ -1768,10 +1792,11 @@
                   { label: "Posts", value: postJobs.length, subtitle: "Posts o threads ya disparados." },
                   { label: "Mentions", value: mentionJobs.length, subtitle: "Respuestas públicas a menciones activas." },
                   { label: "DMs", value: dmJobs.length, subtitle: "Outreach o seguimiento por mensaje directo." },
+                  { label: "Media sent", value: getSectionItemValue(section, "media_sent") || mediaJobs.length, subtitle: "Assets enviados por privado." },
                   { label: "Impresiones", value: sumJobMetric(jobs, "impressions"), subtitle: "Huella estimada de la conversación." }
                 ])}
               </div>
-              ${renderConversationPreview(dmJobs, {
+              ${renderConversationPreview([...dmJobs, ...mediaJobs], {
                 emptyMessage: "Todavia no hay DMs recientes en X.",
                 channelLabel: "X"
               })}
@@ -1785,6 +1810,7 @@
         const section = getChannelSummarySection(platform.id, "messenger_inbox");
         const messageJobs = jobs.filter((item) => getJobActionType(item) === "send_message");
         const commentJobs = jobs.filter((item) => getJobActionType(item) === "reply_comment");
+        const mediaJobs = jobs.filter((item) => getJobActionType(item) === "send_media");
         const handoffJobs = jobs.filter((item) => getJobActionType(item) === "handoff_agent");
         return `
           <div class="channel-experience">
@@ -1792,7 +1818,7 @@
               <div class="spotlight-card">
                 <div class="chart-title">Inbox de Messenger</div>
                 <div class="spotlight-subtitle">Se parece a WhatsApp, pero aquí conviene mezclar inbox directo y replies disparados desde comentarios.</div>
-                ${renderConversationPreview([...messageJobs, ...commentJobs], {
+                ${renderConversationPreview([...messageJobs, ...commentJobs, ...mediaJobs], {
                   emptyMessage: "Todavia no hay conversaciones activas en Messenger.",
                   channelLabel: "Messenger"
                 })}
@@ -1802,6 +1828,7 @@
             ${renderMetricPillGrid([
               { label: "Mensajes", value: getSectionItemValue(section, "messages_sent"), subtitle: "Conversaciones iniciadas o continuadas por inbox." },
               { label: "Comentarios", value: getSectionItemValue(section, "comments_replied"), subtitle: "Replies ligados a conversación pública." },
+              { label: "Media sent", value: getSectionItemValue(section, "media_sent") || mediaJobs.length, subtitle: "Assets compartidos dentro de threads." },
               { label: "Handoffs", value: getSectionItemValue(section, "handoffs"), subtitle: "Chats escalados a operador humano." },
               { label: "Threads abiertos", value: sumJobMetric(jobs, "openThreads"), subtitle: "Carga activa del inbox de Messenger." }
             ])}
@@ -1828,6 +1855,7 @@
                 </div>
                 ${renderMetricPillGrid([
                   { label: "Emails", value: getSectionItemValue(section, "emails_sent"), subtitle: "Volumen de envíos individuales recientes." },
+                  { label: "Media emails", value: getSectionItemValue(section, "media_sent"), subtitle: "Correos con adjuntos visuales o video." },
                   { label: "Open rate", value: averageJobMetric(emailJobs, "openRate"), suffix: "%", subtitle: "Promedio de aperturas en mensajes simples." },
                   { label: "Click rate", value: averageJobMetric(emailJobs, "clickRate"), suffix: "%", subtitle: "Promedio de clics sobre emails disparados." },
                   { label: "Reply rate", value: averageJobMetric(emailJobs, "replyRate"), suffix: "%", subtitle: "Promedio de respuesta sobre envíos directos." }
@@ -1865,6 +1893,7 @@
         const section = getChannelSummarySection(platform.id, "whatsapp_inbox");
         const templateJobs = jobs.filter((item) => getJobActionType(item) === "send_template");
         const replyJobs = jobs.filter((item) => getJobActionType(item) === "reply_message");
+        const mediaJobs = jobs.filter((item) => getJobActionType(item) === "send_media");
         const handoffJobs = jobs.filter((item) => getJobActionType(item) === "handoff_agent");
         return `
           <div class="channel-experience">
@@ -1872,7 +1901,7 @@
               <div class="spotlight-card">
                 <div class="chart-title">Bandeja de WhatsApp</div>
                 <div class="spotlight-subtitle">WhatsApp debe sentirse como inbox operativo: templates para abrir, replies para resolver y handoff cuando ya requiere humano.</div>
-                ${renderConversationPreview([...replyJobs, ...templateJobs], {
+                ${renderConversationPreview([...replyJobs, ...templateJobs, ...mediaJobs], {
                   emptyMessage: "Todavia no hay conversaciones recientes en WhatsApp.",
                   channelLabel: "WhatsApp"
                 })}
@@ -1882,6 +1911,7 @@
             ${renderMetricPillGrid([
               { label: "Templates", value: getSectionItemValue(section, "templates_sent"), subtitle: "Mensajes de apertura o reactivación." },
               { label: "Replies", value: getSectionItemValue(section, "messages_replied"), subtitle: "Mensajes respondidos dentro de conversaciones activas." },
+              { label: "Media sent", value: getSectionItemValue(section, "media_sent") || mediaJobs.length, subtitle: "Imagenes o videos enviados dentro del chat." },
               { label: "Handoffs", value: getSectionItemValue(section, "handoffs"), subtitle: "Conversaciones derivadas a operador." },
               { label: "Resolved chats", value: sumJobMetric(replyJobs, "resolvedChats"), subtitle: "Casos cerrados desde el inbox." }
             ])}
@@ -1956,9 +1986,96 @@
         }
       }
 
+      function renderAgentConfigFields(platformId, agentType) {
+        const definition = getAgentTypeDefinition(platformId, agentType);
+        if (!definition) {
+          return `<div class="empty-state"><div class="empty">Selecciona un tipo de agente para cargar su configuración.</div></div>`;
+        }
+
+        return `
+          <div class="section-note">${escapeHtml(definition.description)}</div>
+          ${definition.config_fields.map((field) => `
+            <div class="field">
+              <label for="agentConfig_${escapeHtml(field.key)}">${escapeHtml(field.label)}</label>
+              <select id="agentConfig_${escapeHtml(field.key)}" name="agentConfig_${escapeHtml(field.key)}">
+                ${field.options.map((option, index) => `<option value="${escapeHtml(option.value)}" ${index === 0 ? "selected" : ""}>${escapeHtml(option.label)}</option>`).join("")}
+              </select>
+            </div>
+          `).join("")}
+        `;
+      }
+
+      function buildAgentConfigPayload(form, platformId, agentType) {
+        const definition = getAgentTypeDefinition(platformId, agentType);
+        const config = { agentType };
+        if (!definition) return config;
+        definition.config_fields.forEach((field) => {
+          config[field.key] = String(form.get(`agentConfig_${field.key}`) || field.options[0]?.value || "");
+        });
+        return config;
+      }
+
+      function renderSubagentConfigFields(platformId, agentType, actionType) {
+        const definition = getAgentTypeDefinition(platformId, agentType);
+        if (!definition) return `<div class="empty-state"><div class="empty">Selecciona un tipo de agente para ver su subagente operativo.</div></div>`;
+        const action = getChannelActions(platformId).find((item) => item.action_type === actionType);
+        const fieldSets = {
+          dm_responder: [
+            { key: "serviceLevel", label: "Velocidad de respuesta", options: [["instant", "Inmediata"], ["same_shift", "Durante el turno"], ["same_day", "Mismo dia"]] },
+            { key: "handoffMode", label: "Escalado", options: [["qualify_then_handoff", "Calificar y escalar"], ["resolve_if_simple", "Resolver si es simple"], ["handoff_immediately", "Escalar de inmediato"]] },
+            { key: "conversationGoal", label: "Meta principal", options: [["capture_lead", "Captar lead"], ["support_triage", "Triage de soporte"], ["book_call", "Agendar llamada"]] },
+            { key: "mediaMode", label: "Media permitida", options: [["none", "No enviar media"], ["image_only", "Solo imagen"], ["video_only", "Solo video"], ["image_or_video", "Imagen o video"]] }
+          ],
+          comment_responder: [
+            { key: "moderationSweep", label: "Cobertura", options: [["sales_first", "Solo intencion comercial"], ["public_replies", "Responder publicamente"], ["moderate_all", "Moderar todo"]] },
+            { key: "replyDepth", label: "Profundidad", options: [["single_reply", "Una respuesta"], ["follow_thread", "Seguir hilo"], ["convert_to_dm", "Mover a DM"]] },
+            { key: "leadRouting", label: "Ruteo", options: [["sales", "Ventas"], ["community", "Community"], ["support", "Soporte"]] }
+          ],
+          publisher: [
+            { key: "contentSource", label: "Fuente de contenido", options: [["asset_library", "Libreria de assets"], ["drive_folder", "Carpeta compartida"], ["campaign_calendar", "Calendario de campana"]] },
+            { key: "publishingWindow", label: "Ventana de publicacion", options: [["morning", "Manana"], ["afternoon", "Tarde"], ["prime_time", "Prime time"]] },
+            { key: "approvalRoute", label: "Aprobacion", options: [["required", "Requiere revision"], ["fast_track", "Fast track"], ["auto_publish", "Autopublicar"]] },
+            { key: "assetMode", label: "Formato del asset", options: [["image", "Imagen"], ["video", "Video"], ["mixed", "Imagen o video"]] }
+          ],
+          ads_operator: [
+            { key: "campaignTempo", label: "Ritmo de campana", options: [["always_on", "Always on"], ["launch_sprint", "Sprint de lanzamiento"], ["retargeting_cycle", "Ciclo de retargeting"]] },
+            { key: "audiencePreset", label: "Audiencia", options: [["warm_leads", "Warm leads"], ["cold_interest", "Interes frio"], ["retargeting", "Retargeting"]] },
+            { key: "spendTier", label: "Inversion", options: [["low", "Baja"], ["medium", "Media"], ["high", "Alta"]] }
+          ]
+        };
+        const fields = fieldSets[agentType] || [];
+        if (!fields.length) return "";
+        return `
+          <div class="field">
+            <label>Subagente operativo</label>
+            <div class="helper-text">La rutina interna usara ${escapeHtml(action?.label || "la accion seleccionada")} con opciones cerradas.</div>
+          </div>
+          ${fields.map((field) => `
+            <div class="field">
+              <label for="subagent_${field.key}">${escapeHtml(field.label)}</label>
+              <select id="subagent_${field.key}" name="subagent_${field.key}" form="genericAgentSetupForm">
+                ${field.options.map(([value, label]) => `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`).join("")}
+              </select>
+            </div>
+          `).join("")}
+        `;
+      }
+
+      function buildSubagentConfigPayload(form, agentType) {
+        const fieldKeysByType = {
+          dm_responder: ["serviceLevel", "handoffMode", "conversationGoal", "mediaMode"],
+          comment_responder: ["moderationSweep", "replyDepth", "leadRouting"],
+          publisher: ["contentSource", "publishingWindow", "approvalRoute", "assetMode"],
+          ads_operator: ["campaignTempo", "audiencePreset", "spendTier"]
+        };
+        const keys = fieldKeysByType[agentType] || [];
+        return Object.fromEntries(keys.map((key) => [key, String(form.get(`subagent_${key}`) || "")]));
+      }
+
       function renderAccounts() {
         const platform = getSelectedPlatform();
         const accounts = getAccountsForPlatform();
+        const actionDefinitions = getChannelActions(platform.id);
         accountsTitle.textContent = `Cuentas de ${platform.label}`;
         accountsSubtitle.textContent = platform.description;
         accountsCount.textContent = String(accounts.length);
@@ -1982,6 +2099,33 @@
         accountsList.querySelectorAll("[data-account-id]").forEach((button) => {
           button.addEventListener("click", () => setAccount(button.dataset.accountId));
         });
+
+        accountActionsPanel.innerHTML = `
+          <div class="section-card">
+            <div class="section-row">
+              <div>
+                <div class="item-title">Acciones del canal</div>
+                <div class="item-sub">Opciones disponibles para ${escapeHtml(platform.label)}.</div>
+              </div>
+              <div class="count-badge">${actionDefinitions.length}</div>
+            </div>
+            <div style="margin-top: 16px;">
+              ${actionDefinitions.length
+                ? actionDefinitions.map((item) => `
+                    <div class="list-card">
+                      <div class="item-row">
+                        <div>
+                          <div class="item-title">${escapeHtml(item.label)}</div>
+                          <div class="item-sub">${escapeHtml(item.description)}</div>
+                        </div>
+                        <div class="badge info">${escapeHtml(item.content_type || item.action_type)}</div>
+                      </div>
+                    </div>
+                  `).join("")
+                : `<div class="empty-state"><div class="empty">Este canal no tiene acciones operativas en esta vista.</div></div>`}
+            </div>
+          </div>
+        `;
       }
 
       function renderDetail() {
@@ -2003,9 +2147,12 @@
         const agents = state.channelSnapshot ? getChannelAgentsForAccount(account.id) : account.agents;
         const flows = state.channelSnapshot ? getChannelFlowsForAccount(account.id) : account.automations;
         const jobs = state.channelSnapshot ? getChannelJobsForAccount(account.id) : [];
-        const contacts = getGenericSnapshot().contacts ?? [];
-        const automations = getGenericSnapshot().automations ?? [];
         const actionDefinitions = getChannelActions(platform.id);
+        const triggerDefinitions = getChannelTriggers(platform.id);
+        const agentTypeDefinitions = getChannelAgentTypes(platform.id);
+        const flowByAgentId = new Map(flows.filter((item) => item.agent_id).map((item) => [item.agent_id, item]));
+        const triggerLabelById = Object.fromEntries(triggerDefinitions.map((item) => [item.trigger_type, item.label]));
+        const actionLabelById = Object.fromEntries(actionDefinitions.map((item) => [item.action_type, item.label]));
 
         detailRoot.innerHTML = `
           <div class="hero-card">
@@ -2020,81 +2167,29 @@
 
           <div class="summary-grid">
             <div class="metric-card"><div class="metric-label">Agentes</div><div class="display metric-value">${agents.length}</div></div>
-            <div class="metric-card"><div class="metric-label">Flows</div><div class="display metric-value">${flows.length}</div></div>
-            <div class="metric-card"><div class="metric-label">Jobs</div><div class="display metric-value">${jobs.length}</div></div>
+            <div class="metric-card"><div class="metric-label">Subagentes</div><div class="display metric-value">${flows.length}</div></div>
+            <div class="metric-card"><div class="metric-label">Ejecuciones</div><div class="display metric-value">${jobs.length}</div></div>
             <div class="metric-card"><div class="metric-label">Acciones disponibles</div><div class="display metric-value">${actionDefinitions.length}</div></div>
           </div>
 
           <div class="chart-grid" style="margin-top: 14px;">
             <div class="section-card">
-              <div class="item-title">Crear agente</div>
-              <form id="genericAgentForm">
-                <div class="field"><label for="genericAgentName">Nombre</label><input id="genericAgentName" name="name" placeholder="Asistente de ventas" /></div>
+              <div class="item-title">Personalizar agente</div>
+              <div class="helper-text" style="margin-bottom: 14px;">Aqui defines el agente y su subagente operativo. Ya no necesitas crear flows ni jobs manualmente.</div>
+              <form id="genericAgentSetupForm">
+                <div class="field"><label for="genericAgentName">Nombre del agente</label><input id="genericAgentName" name="name" placeholder="Agente de Instagram MX" /></div>
+                <div class="field"><label for="genericAgentType">Tipo de agente</label><select id="genericAgentType" name="agentType"></select></div>
                 <div class="field"><label for="genericAgentObjective">Objetivo</label><input id="genericAgentObjective" name="objective" placeholder="Responder preguntas frecuentes y captar leads" /></div>
-                <div class="field"><label for="genericAgentPersona">Prompt de persona</label><textarea id="genericAgentPersona" name="personaPrompt" placeholder="Tono de marca, guion base y criterio de respuesta."></textarea></div>
-                <div class="section-actions"><button class="button" type="submit">Crear agente</button></div>
+                <div id="genericAgentConfigFields"></div>
+                <div class="field"><label for="genericFlowTrigger">Activacion</label><select id="genericFlowTrigger" name="triggerType"></select></div>
+                <div class="field"><label for="genericFlowAction">Accion principal</label><select id="genericFlowAction" name="actionType"></select></div>
+                <div class="field"><label for="genericFlowPrompt">Guion base</label><textarea id="genericFlowPrompt" name="promptTemplate" placeholder="Define el copy, tono y reglas del agente para esta rutina."></textarea></div>
+                <div class="section-actions"><button class="button" type="submit">Guardar agente y subagente</button></div>
               </form>
             </div>
             <div class="section-card">
-              <div class="item-title">Crear flow</div>
-              <form id="genericFlowForm">
-                <div class="field"><label for="genericFlowName">Nombre</label><input id="genericFlowName" name="name" placeholder="Publicacion del dia" /></div>
-                <div class="field"><label for="genericFlowObjective">Objetivo</label><input id="genericFlowObjective" name="objective" placeholder="Publicar y responder la pieza principal del canal" /></div>
-                <div class="field"><label for="genericFlowTrigger">Trigger</label><input id="genericFlowTrigger" name="triggerType" placeholder="manual, new_lead, schedule, reply_needed" /></div>
-                <div class="field"><label for="genericFlowAction">Accion</label><select id="genericFlowAction" name="actionType"></select></div>
-                <div class="field"><label for="genericFlowAgentId">Agente</label><select id="genericFlowAgentId" name="agentId"></select></div>
-                <div class="field"><label for="genericFlowAutomationId">Automation</label><select id="genericFlowAutomationId" name="automationId"></select></div>
-                <div class="field"><label for="genericFlowPrompt">Instrucciones</label><textarea id="genericFlowPrompt" name="promptTemplate" placeholder="Objetivo, copy base, tono y reglas del contenido."></textarea></div>
-                <div class="field"><label for="genericFlowConfig">Config JSON</label><textarea id="genericFlowConfig" name="actionConfig" placeholder='{"assetType":"video","destination":"feed"}'></textarea></div>
-                <div class="section-actions"><button class="button" type="submit">Crear flow</button></div>
-              </form>
-            </div>
-          </div>
-          <div class="chart-grid" style="margin-top: 14px;">
-            <div class="section-card">
-              <div class="item-title">Crear job</div>
-              <form id="genericJobForm">
-                <div class="field"><label for="genericJobTitle">Titulo</label><input id="genericJobTitle" name="title" placeholder="Publicacion semanal" /></div>
-                <div class="field"><label for="genericJobAgentId">Agente</label><select id="genericJobAgentId" name="agentId"></select></div>
-                <div class="field"><label for="genericJobFlowId">Flow</label><select id="genericJobFlowId" name="flowId"></select></div>
-                <div class="field"><label for="genericJobContactId">Contacto</label><select id="genericJobContactId" name="contactId"></select></div>
-                <div class="field"><label for="genericJobTarget">Target</label><input id="genericJobTarget" name="targetRef" placeholder="@usuario, email o destino" /></div>
-                <div class="field"><label for="genericJobPayload">Payload JSON</label><textarea id="genericJobPayload" name="payload" placeholder='{"caption":"Texto de prueba","assetUrl":"https://..."}'></textarea></div>
-                <div class="section-actions"><button class="button" type="submit">Crear job</button></div>
-              </form>
-            </div>
-            <div class="section-card">
-              <div class="chart-title">Acciones de ${escapeHtml(platform.label)}</div>
-              ${actionDefinitions.length
-                ? actionDefinitions.map((item) => `
-                    <div class="list-card">
-                      <div class="item-row">
-                        <div>
-                          <div class="item-title">${escapeHtml(item.label)}</div>
-                          <div class="item-sub">${escapeHtml(item.description)}</div>
-                        </div>
-                        <div class="badge info">${escapeHtml(item.content_type || item.action_type)}</div>
-                      </div>
-                    </div>
-                  `).join("")
-                : `<div class="empty-state"><div class="empty">No hay acciones definidas para este canal.</div></div>`}
-            </div>
-          </div>
-
-          <div class="chart-grid" style="margin-top: 14px;">
-            <div class="section-card">
-              <div class="chart-title">Agentes de la cuenta</div>
-              ${agents.length
-                ? agents.map((item) => `
-                    <div class="list-card">
-                      <div class="item-title">${escapeHtml(item.name)}</div>
-                      <div class="item-sub">${escapeHtml(item.objective || item.persona_prompt || "Sin objetivo")}</div>
-                    </div>
-                  `).join("")
-                : `<div class="empty-state"><div class="empty">Todavia no hay agentes para esta cuenta.</div></div>`}
-            </div>
-            <div class="section-card">
-              <div class="chart-title">Flows de la cuenta</div>
+              <div class="chart-title">Subagentes operativos</div>
+              <div id="genericSubagentConfigFields" style="margin-bottom: 16px;"></div>
               ${flows.length
                 ? flows.map((item) => `
                     <div class="list-card">
@@ -2103,16 +2198,65 @@
                           <div class="item-title">${escapeHtml(item.name)}</div>
                           <div class="item-sub">${escapeHtml(item.objective || item.description || "Sin descripcion")}</div>
                         </div>
-                        <div class="badge ${item.status === "active" ? "ok" : "warn"}">${escapeHtml(item.action_type || item.status || "active")}</div>
+                        <div class="badge ${item.status === "active" ? "ok" : "warn"}">${escapeHtml(actionLabelById[item.action_type] || item.status || "active")}</div>
                       </div>
+                      <div class="helper-text" style="margin-top: 10px;">${escapeHtml(triggerLabelById[item.trigger_type] || item.trigger_type || "Sin activacion")}</div>
                     </div>
                   `).join("")
-                : `<div class="empty-state"><div class="empty">Todavia no hay flows para esta cuenta.</div></div>`}
+                : `<div class="empty-state"><div class="empty">Todavia no hay subagentes para esta cuenta.</div></div>`}
+            </div>
+          </div>
+
+          <div class="chart-grid" style="margin-top: 14px;">
+            <div class="section-card">
+              <div class="chart-title">Agentes de la cuenta</div>
+              ${agents.length
+                ? agents.map((item) => `
+                    ${(() => {
+                      const flow = flowByAgentId.get(item.id);
+                      const flowSummary = flow
+                        ? `${triggerLabelById[flow.trigger_type] || flow.trigger_type || "Sin activacion"} · ${actionLabelById[flow.action_type] || flow.action_type || "Sin accion"}`
+                        : "Sin subagente operativo";
+                      return `
+                    <div class="list-card">
+                      <div class="item-row">
+                        <div>
+                          <div class="item-title">${escapeHtml(item.name)}</div>
+                          <div class="item-sub">${escapeHtml(item.objective || item.persona_prompt || "Sin objetivo")}</div>
+                        </div>
+                        <div class="badge info">${escapeHtml(getAgentTypeLabel(platform.id, item.config?.agentType))}</div>
+                      </div>
+                      <div class="helper-text" style="margin-top: 10px;">${escapeHtml(flowSummary)}</div>
+                    </div>
+                  `;
+                    })()}
+                  `).join("")
+                : `<div class="empty-state"><div class="empty">Todavia no hay agentes para esta cuenta.</div></div>`}
+            </div>
+            <div class="section-card">
+              <div class="chart-title">Estado de los agentes</div>
+              ${agents.length
+                ? agents.map((item) => {
+                    const flow = flowByAgentId.get(item.id);
+                    return `
+                      <div class="list-card">
+                        <div class="item-row">
+                          <div>
+                            <div class="item-title">${escapeHtml(item.name)}</div>
+                            <div class="item-sub">${escapeHtml(getAgentTypeLabel(platform.id, item.config?.agentType))}</div>
+                          </div>
+                          <div class="badge ${flow ? "ok" : "warn"}">${flow ? "Listo" : "Incompleto"}</div>
+                        </div>
+                        <div class="helper-text" style="margin-top: 10px;">${escapeHtml(flow ? `${triggerLabelById[flow.trigger_type] || flow.trigger_type || "Sin activacion"} · ${actionLabelById[flow.action_type] || flow.action_type || "Sin accion"}` : "Aun no tiene subagente operativo.")}</div>
+                      </div>
+                    `;
+                  }).join("")
+                : `<div class="empty-state"><div class="empty">Todavia no hay agentes para esta cuenta.</div></div>`}
             </div>
           </div>
 
           <div class="section-card" style="margin-top: 14px;">
-            <div class="chart-title">Jobs de la cuenta</div>
+            <div class="chart-title">Actividad reciente</div>
             ${jobs.length
               ? jobs.map((item) => `
                   <div class="list-card">
@@ -2125,59 +2269,80 @@
                     </div>
                   </div>
                 `).join("")
-              : `<div class="empty-state"><div class="empty">Todavia no hay jobs para esta cuenta.</div></div>`}
+              : `<div class="empty-state"><div class="empty">Todavia no hay ejecuciones para esta cuenta.</div></div>`}
           </div>
         `;
 
-        fillSelect(document.getElementById("genericFlowAgentId"), agents, "name", "Agente opcional");
-        fillSelect(document.getElementById("genericJobAgentId"), agents, "name", "Agente opcional");
-        fillSelect(document.getElementById("genericJobFlowId"), flows, "name", "Selecciona un flow");
-        fillSelect(document.getElementById("genericJobContactId"), contacts, "full_name", "Contacto opcional");
-        fillSelect(document.getElementById("genericFlowAutomationId"), automations, "name", "Automation opcional");
-        document.getElementById("genericFlowAction").innerHTML = [`<option value="">Selecciona una accion</option>`, ...actionDefinitions.map((item) => `<option value="${escapeHtml(item.action_type)}">${escapeHtml(item.label)}</option>`)].join("");
+        fillValueSelect(document.getElementById("genericAgentType"), agentTypeDefinitions, "agent_type", "label", "Selecciona un tipo");
+        fillValueSelect(document.getElementById("genericFlowTrigger"), triggerDefinitions, "trigger_type", "label", "Selecciona un trigger");
 
-        document.getElementById("genericAgentForm").addEventListener("submit", async (event) => {
-          event.preventDefault();
-          const form = new FormData(event.currentTarget);
-          await postJson("/api/channels/agents", { accountId: account.id, channel: platform.id, name: form.get("name"), objective: form.get("objective"), personaPrompt: form.get("personaPrompt"), status: "active" });
-          await loadData("Agente creado.");
+        const genericAgentType = document.getElementById("genericAgentType");
+        const genericAgentConfigFields = document.getElementById("genericAgentConfigFields");
+        const genericFlowAction = document.getElementById("genericFlowAction");
+        const genericSubagentConfigFields = document.getElementById("genericSubagentConfigFields");
+        const genericAgentSubmit = document.querySelector("#genericAgentSetupForm button[type='submit']");
+
+        const renderAgentTypeConfig = () => {
+          genericAgentConfigFields.innerHTML = renderAgentConfigFields(platform.id, genericAgentType.value);
+        };
+
+        const syncActionOptions = () => {
+          const allowedActions = genericAgentType.value
+            ? (getAgentTypeDefinition(platform.id, genericAgentType.value)?.allowed_action_types ?? [])
+            : [];
+          const visibleActions = allowedActions.length
+            ? actionDefinitions.filter((item) => allowedActions.includes(item.action_type))
+            : actionDefinitions;
+          genericFlowAction.innerHTML = [`<option value="">Selecciona una accion</option>`, ...visibleActions.map((item) => `<option value="${escapeHtml(item.action_type)}">${escapeHtml(item.label)}</option>`)].join("");
+          genericFlowAction.value = visibleActions[0]?.action_type || "";
+          genericSubagentConfigFields.innerHTML = renderSubagentConfigFields(platform.id, genericAgentType.value, genericFlowAction.value);
+        };
+
+        genericAgentType.value = agentTypeDefinitions[0]?.agent_type || "";
+        document.getElementById("genericFlowTrigger").value = triggerDefinitions[0]?.trigger_type || "";
+        renderAgentTypeConfig();
+        syncActionOptions();
+        genericAgentType.addEventListener("change", () => {
+          renderAgentTypeConfig();
+          syncActionOptions();
         });
+        genericFlowAction.addEventListener("change", () => {
+          genericSubagentConfigFields.innerHTML = renderSubagentConfigFields(platform.id, genericAgentType.value, genericFlowAction.value);
+        });
+        if (!agentTypeDefinitions.length) {
+          genericAgentSubmit.disabled = true;
+          genericAgentConfigFields.innerHTML = `<div class="empty-state"><div class="empty">Este canal no usa agentes configurables en esta vista.</div></div>`;
+        }
 
-        document.getElementById("genericFlowForm").addEventListener("submit", async (event) => {
+        document.getElementById("genericAgentSetupForm").addEventListener("submit", async (event) => {
           event.preventDefault();
           const form = new FormData(event.currentTarget);
-          const selectedAction = actionDefinitions.find((item) => item.action_type === String(form.get("actionType") || ""));
+          const agentType = String(form.get("agentType") || "");
+          const actionType = String(form.get("actionType") || "");
+          const selectedAction = actionDefinitions.find((item) => item.action_type === actionType);
+          const createdAgent = await postJson("/api/channels/agents", {
+            accountId: account.id,
+            channel: platform.id,
+            name: form.get("name"),
+            agentType,
+            objective: form.get("objective"),
+            status: "active",
+            config: buildAgentConfigPayload(form, platform.id, agentType)
+          });
           await postJson("/api/channels/flows", {
             accountId: account.id,
             channel: platform.id,
-            agentId: form.get("agentId") || undefined,
-            automationId: form.get("automationId") || undefined,
-            name: form.get("name"),
+            agentId: createdAgent?.id,
+            name: `${String(form.get("name") || "Agente")} · ${selectedAction?.label || "Rutina"}`,
             objective: form.get("objective"),
             triggerType: form.get("triggerType"),
-            actionType: form.get("actionType"),
+            actionType,
             contentType: selectedAction?.content_type,
             promptTemplate: form.get("promptTemplate"),
-            actionConfig: parseJsonInput(form.get("actionConfig"), "Config JSON") || undefined,
+            actionConfig: buildSubagentConfigPayload(form, agentType),
             status: "active"
           });
-          await loadData("Flow creado.");
-        });
-
-        document.getElementById("genericJobForm").addEventListener("submit", async (event) => {
-          event.preventDefault();
-          const form = new FormData(event.currentTarget);
-          await postJson("/api/channels/jobs", {
-            accountId: account.id,
-            channel: platform.id,
-            agentId: form.get("agentId") || undefined,
-            flowId: form.get("flowId"),
-            contactId: form.get("contactId") || undefined,
-            title: form.get("title"),
-            targetRef: form.get("targetRef"),
-            payload: parseJsonInput(form.get("payload"), "Payload JSON") || undefined
-          });
-          await loadData("Job creado.");
+          await loadData("Agente personalizado.");
         });
       }
 
@@ -2331,6 +2496,7 @@
         const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
         const data = await safeJson(response);
         if (!response.ok) throw new Error(data?.error || "No se pudo completar la accion.");
+        return data;
       }
 
       async function loadData(message) {
@@ -2352,6 +2518,10 @@
           renderApp();
           setStatus(error.message || "No se pudo cargar el backend.", true);
         }
+      }
+
+      function fillValueSelect(element, items, valueField, labelField, placeholder) {
+        element.innerHTML = [`<option value="">${escapeHtml(placeholder)}</option>`, ...items.map((item) => `<option value="${escapeHtml(item[valueField])}">${escapeHtml(item[labelField] || item.label || item.name || "Untitled")}</option>`)].join("");
       }
 
       function fillSelect(element, items, labelField, placeholder) {

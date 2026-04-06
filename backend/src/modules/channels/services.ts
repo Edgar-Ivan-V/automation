@@ -47,12 +47,18 @@ import {
   updateChannelFlowRepository,
   updateChannelJobRepository
 } from "./repositories.js";
-import { CHANNEL_ACTIONS, isSupportedChannel } from "./catalog.js";
+import {
+  CHANNEL_ACTIONS,
+  CHANNEL_TRIGGERS,
+  getChannelAgentTypes,
+  isSupportedChannel,
+} from "./catalog.js";
 import { requireServiceSupabaseClient } from "../shared/supabase-client.js";
 import { NotFoundError, ValidationError } from "../shared/errors.js";
 import { optionalString, requireNonEmptyString } from "../shared/validation.js";
 import type {
   ChannelAccount,
+  ChannelAgentType,
   ChannelAccountStatus,
   ChannelBotStatus,
   ChannelFlow,
@@ -113,6 +119,66 @@ function requireRecord(value: unknown, field: string) {
   return value as Record<string, unknown>;
 }
 
+function parseEnumValue(value: unknown, allowedValues: string[], field: string, defaultValue: string) {
+  if (value == null || value === "") return defaultValue;
+  if (typeof value !== "string" || !allowedValues.includes(value)) {
+    throw new ValidationError(`${field} is invalid.`);
+  }
+  return value;
+}
+
+function parseChannelAction(channel: ChannelKind, value: unknown) {
+  const actionType = requireNonEmptyString(value, "actionType");
+  if (!CHANNEL_ACTIONS[channel].some((action) => action.action_type === actionType)) {
+    throw new ValidationError("actionType is invalid for this channel.");
+  }
+  return actionType;
+}
+
+function parseChannelTrigger(channel: ChannelKind, value: unknown) {
+  const triggerType = requireNonEmptyString(value, "triggerType");
+  if (!CHANNEL_TRIGGERS[channel].some((trigger) => trigger.trigger_type === triggerType)) {
+    throw new ValidationError("triggerType is invalid for this channel.");
+  }
+  return triggerType;
+}
+
+function normalizeChannelAgentConfig(channel: ChannelKind, rawConfig: unknown, rawAgentType: unknown) {
+  const config = requireRecord(rawConfig, "config");
+  const definitions = getChannelAgentTypes(channel);
+  const allowedTypes = definitions.map((definition) => definition.agent_type);
+  const fallbackType = allowedTypes[0] ?? "publisher";
+  const agentType = parseEnumValue(rawAgentType ?? config.agentType, allowedTypes, "agentType", fallbackType) as ChannelAgentType;
+  const definition = definitions.find((item) => item.agent_type === agentType);
+  if (!definition) throw new ValidationError("agentType is invalid for this channel.");
+
+  const normalizedConfig: Record<string, unknown> = { agentType };
+  for (const field of definition.config_fields) {
+    normalizedConfig[field.key] = parseEnumValue(
+      config[field.key],
+      field.options.map((option) => option.value),
+      `config.${field.key}`,
+      field.options[0]?.value ?? ""
+    );
+  }
+
+  return normalizedConfig;
+}
+
+function getAgentTypeFromConfig(config: Record<string, unknown> | null | undefined) {
+  return typeof config?.agentType === "string" ? config.agentType : null;
+}
+
+function ensureActionAllowedForAgent(channel: ChannelKind, agentConfig: Record<string, unknown> | null | undefined, actionType: string) {
+  const agentType = getAgentTypeFromConfig(agentConfig);
+  if (!agentType) return;
+  const definition = getChannelAgentTypes(channel).find((item) => item.agent_type === agentType);
+  if (!definition) return;
+  if (!definition.allowed_action_types.includes(actionType)) {
+    throw new ValidationError("Selected agent type cannot run this action.");
+  }
+}
+
 function buildPreviewResultPayload(channel: ChannelKind, actionType: string, job: { title: string; target_ref: string | null; payload: Record<string, unknown> }) {
   const base = {
     mode: "preview",
@@ -125,6 +191,14 @@ function buildPreviewResultPayload(channel: ChannelKind, actionType: string, job
 
   switch (channel) {
     case "instagram":
+      if (actionType === "send_media") {
+        return {
+          ...base,
+          asset: { format: "media", status: "sent_preview", uploadedAssets: 1 },
+          conversation: { lane: "instagram_dm", status: "media_sent_preview", handoffRecommended: false },
+          metrics: { views: 180, taps: 24, repliesSent: 1 },
+        };
+      }
       if (actionType === "publish_post") {
         return {
           ...base,
@@ -153,8 +227,23 @@ function buildPreviewResultPayload(channel: ChannelKind, actionType: string, job
           metrics: { firstResponseMinutes: 8, repliesSent: 1 },
         };
       }
+      if (actionType === "manage_ad_campaign") {
+        return {
+          ...base,
+          campaign: { status: "draft_preview", goal: "leads", platform: "instagram" },
+          metrics: { budgetDaily: 35, clickThroughRate: 2.7, leads: 5 },
+        };
+      }
       break;
     case "tiktok":
+      if (actionType === "send_media") {
+        return {
+          ...base,
+          asset: { format: "media", status: "sent_preview", uploadedAssets: 1 },
+          conversation: { lane: "creator_outreach", status: "media_sent_preview" },
+          metrics: { views: 260, repliesSent: 1, clicks: 7 },
+        };
+      }
       if (actionType === "publish_video") {
         return {
           ...base,
@@ -176,8 +265,23 @@ function buildPreviewResultPayload(channel: ChannelKind, actionType: string, job
           metrics: { qualificationScore: 72 },
         };
       }
+      if (actionType === "manage_ad_campaign") {
+        return {
+          ...base,
+          campaign: { status: "draft_preview", goal: "traffic", platform: "tiktok" },
+          metrics: { budgetDaily: 42, clickThroughRate: 1.9, leads: 3 },
+        };
+      }
       break;
     case "email":
+      if (actionType === "send_media") {
+        return {
+          ...base,
+          delivery: { status: "queued_preview", campaignType: "media_email", attachments: 1 },
+          asset: { format: "media", status: "attached_preview", uploadedAssets: 1 },
+          metrics: { delivered: 1, openRate: 43, clickRate: 11, attachmentDownloads: 3 },
+        };
+      }
       if (actionType === "send_email") {
         return {
           ...base,
@@ -201,6 +305,14 @@ function buildPreviewResultPayload(channel: ChannelKind, actionType: string, job
       }
       break;
     case "facebook":
+      if (actionType === "send_media") {
+        return {
+          ...base,
+          asset: { format: "media", status: "sent_preview", uploadedAssets: 1 },
+          conversation: { lane: "dm", status: "media_sent_preview" },
+          metrics: { views: 210, repliesSent: 1, clicks: 9 },
+        };
+      }
       if (actionType === "publish_post") {
         return {
           ...base,
@@ -229,14 +341,44 @@ function buildPreviewResultPayload(channel: ChannelKind, actionType: string, job
           metrics: { qualificationScore: 68 },
         };
       }
+      if (actionType === "manage_ad_campaign") {
+        return {
+          ...base,
+          campaign: { status: "draft_preview", goal: "engagement", platform: "facebook" },
+          metrics: { budgetDaily: 28, clickThroughRate: 1.6, leads: 2 },
+        };
+      }
       break;
     case "x":
+      if (actionType === "send_media") {
+        return {
+          ...base,
+          asset: { format: "media", status: "sent_preview", uploadedAssets: 1 },
+          conversation: { lane: "dm", status: "media_sent_preview" },
+          metrics: { impressions: 190, engagements: 16, replies: 1 },
+        };
+      }
+      if (actionType === "manage_ad_campaign") {
+        return {
+          ...base,
+          campaign: { status: "draft_preview", goal: "traffic", platform: "x" },
+          metrics: { budgetDaily: 25, clickThroughRate: 1.4, leads: 1 },
+        };
+      }
       return {
         ...base,
         conversation: { lane: actionType === "send_dm" ? "dm" : "public", status: "executed_preview" },
         metrics: { impressions: 340, engagements: 28, replies: actionType === "reply_mention" ? 1 : 0 },
       };
     case "whatsapp":
+      if (actionType === "send_media") {
+        return {
+          ...base,
+          asset: { format: "media", status: "sent_preview", uploadedAssets: 1 },
+          conversation: { lane: "inbox", status: "media_sent_preview" },
+          metrics: { delivered: 1, views: 1, resolvedChats: 1 },
+        };
+      }
       if (actionType === "send_template") {
         return {
           ...base,
@@ -260,6 +402,14 @@ function buildPreviewResultPayload(channel: ChannelKind, actionType: string, job
       }
       break;
     case "messenger":
+      if (actionType === "send_media") {
+        return {
+          ...base,
+          asset: { format: "media", status: "sent_preview", uploadedAssets: 1 },
+          conversation: { lane: "inbox", status: "media_sent_preview" },
+          metrics: { repliesSent: 1, openThreads: 2, mediaViews: 1 },
+        };
+      }
       return {
         ...base,
         conversation: { lane: actionType === "reply_comment" ? "comment" : "inbox", status: "executed_preview" },
@@ -335,6 +485,7 @@ function buildChannelSummary(channel: ChannelKind, input: {
             { key: "images_uploaded", label: "Images uploaded", value: countJobsByAction(jobs, "publish_post"), description: "Feed photos and carousels." },
             { key: "stories_published", label: "Stories published", value: countJobsByAction(jobs, "publish_story"), description: "Story assets published." },
             { key: "reels_published", label: "Reels published", value: countJobsByAction(jobs, "publish_reel"), description: "Short-form video assets." },
+            { key: "media_sent", label: "Media sent", value: countJobsByAction(jobs, "send_media"), description: "Images or videos sent in DM flows." },
             { key: "dms_replied", label: "DMs replied", value: countJobsByAction(jobs, "reply_dm"), description: "Inbox conversations handled." },
           ],
         },
@@ -349,6 +500,7 @@ function buildChannelSummary(channel: ChannelKind, input: {
           description: "Uploads, comments and leads from short-form video.",
           items: [
             { key: "videos_uploaded", label: "Videos uploaded", value: countJobsByAction(jobs, "publish_video"), description: "Videos staged or published." },
+            { key: "media_sent", label: "Media sent", value: countJobsByAction(jobs, "send_media"), description: "Assets sent in creator or campaign workflows." },
             { key: "comments_replied", label: "Comments replied", value: countJobsByAction(jobs, "reply_comment"), description: "Public comment responses." },
             { key: "leads_captured", label: "Leads captured", value: countJobsByAction(jobs, "capture_lead"), description: "Lead capture executions." },
           ],
@@ -364,6 +516,7 @@ function buildChannelSummary(channel: ChannelKind, input: {
           description: "One-off sends, sequences and segmentation activity.",
           items: [
             { key: "emails_sent", label: "Emails sent", value: countJobsByAction(jobs, "send_email"), description: "Single-message sends." },
+            { key: "media_sent", label: "Media attachments sent", value: countJobsByAction(jobs, "send_media"), description: "Emails with image or video attachments." },
             { key: "sequences_running", label: "Sequences running", value: countJobsByAction(jobs, "send_sequence"), description: "Sequence enrollments or launches." },
             { key: "contacts_tagged", label: "Contacts tagged", value: countJobsByAction(jobs, "tag_contact"), description: "Segmentation updates." },
           ],
@@ -381,6 +534,7 @@ function buildChannelSummary(channel: ChannelKind, input: {
             { key: "posts_published", label: "Posts published", value: countJobsByAction(jobs, "publish_post"), description: "Feed posts shipped." },
             { key: "comments_replied", label: "Comments replied", value: countJobsByAction(jobs, "reply_comment"), description: "Comment replies completed." },
             { key: "dms_replied", label: "DMs replied", value: countJobsByAction(jobs, "reply_dm"), description: "Messenger-style private replies from Facebook." },
+            { key: "media_sent", label: "Media sent", value: countJobsByAction(jobs, "send_media"), description: "Image or video assets sent through inbox flows." },
             { key: "leads_captured", label: "Leads captured", value: countJobsByAction(jobs, "capture_lead"), description: "Lead capture jobs from interaction." },
           ],
         },
@@ -397,6 +551,7 @@ function buildChannelSummary(channel: ChannelKind, input: {
             { key: "posts_published", label: "Posts published", value: countJobsByAction(jobs, "publish_post"), description: "Posts or threads sent to X." },
             { key: "mentions_replied", label: "Mentions replied", value: countJobsByAction(jobs, "reply_mention"), description: "Public mention replies." },
             { key: "dms_sent", label: "DMs sent", value: countJobsByAction(jobs, "send_dm"), description: "Direct messages sent." },
+            { key: "media_sent", label: "Media sent", value: countJobsByAction(jobs, "send_media"), description: "Images or videos sent in private outreach." },
           ],
         },
       ];
@@ -411,6 +566,7 @@ function buildChannelSummary(channel: ChannelKind, input: {
           items: [
             { key: "templates_sent", label: "Templates sent", value: countJobsByAction(jobs, "send_template"), description: "Outbound template sends." },
             { key: "messages_replied", label: "Messages replied", value: countJobsByAction(jobs, "reply_message"), description: "Inbox replies sent." },
+            { key: "media_sent", label: "Media sent", value: countJobsByAction(jobs, "send_media"), description: "Images or videos sent inside conversations." },
             { key: "handoffs", label: "Human handoffs", value: countJobsByAction(jobs, "handoff_agent"), description: "Escalations to humans." },
           ],
         },
@@ -426,6 +582,7 @@ function buildChannelSummary(channel: ChannelKind, input: {
           items: [
             { key: "messages_sent", label: "Messages sent", value: countJobsByAction(jobs, "send_message"), description: "Messenger messages delivered." },
             { key: "comments_replied", label: "Comments replied", value: countJobsByAction(jobs, "reply_comment"), description: "Comment-related replies." },
+            { key: "media_sent", label: "Media sent", value: countJobsByAction(jobs, "send_media"), description: "Images or videos sent inside Messenger threads." },
             { key: "handoffs", label: "Human handoffs", value: countJobsByAction(jobs, "handoff_agent"), description: "Escalations to human operators." },
           ],
         },
@@ -540,6 +697,7 @@ export async function createChannelAgent(input: CreateChannelAgentInput) {
   const account = await getChannelAccountRepository(client, organizationId, requireNonEmptyString(input.accountId, "accountId"));
   if (!account) throw new NotFoundError("Channel account not found.");
   if (account.channel !== channel) throw new ValidationError("Agent channel must match account channel.");
+  const config = normalizeChannelAgentConfig(channel, input.config, input.agentType);
   return createChannelAgentRepository(client, {
     id: crypto.randomUUID(),
     organization_id: organizationId,
@@ -549,7 +707,7 @@ export async function createChannelAgent(input: CreateChannelAgentInput) {
     objective: optionalString(input.objective, "objective"),
     persona_prompt: optionalString(input.personaPrompt, "personaPrompt"),
     status: parseBotStatus(input.status),
-    config: requireRecord(input.config, "config")
+    config
   });
 }
 
@@ -560,7 +718,9 @@ export async function updateChannelAgent(organizationId: string, agentId: string
   if (input.objective !== undefined) patch.objective = optionalString(input.objective, "objective");
   if (input.personaPrompt !== undefined) patch.persona_prompt = optionalString(input.personaPrompt, "personaPrompt");
   if (input.status !== undefined) patch.status = parseBotStatus(input.status);
-  if (input.config !== undefined) patch.config = requireRecord(input.config, "config");
+  if (input.config !== undefined || input.agentType !== undefined) {
+    patch.config = normalizeChannelAgentConfig(agent.channel, input.config ?? agent.config, input.agentType);
+  }
   return updateChannelAgentRepository(client, agent.organization_id, agent.id, patch);
 }
 
@@ -578,6 +738,8 @@ export async function createChannelFlow(input: CreateChannelFlowInput) {
   const client = requireServiceSupabaseClient();
   const organizationId = requireNonEmptyString(input.organizationId, "organizationId");
   const channel = parseChannel(input.channel);
+  const actionType = parseChannelAction(channel, input.actionType);
+  const triggerType = parseChannelTrigger(channel, input.triggerType);
   const account = await getChannelAccountRepository(client, organizationId, requireNonEmptyString(input.accountId, "accountId"));
   if (!account) throw new NotFoundError("Channel account not found.");
   if (account.channel !== channel) throw new ValidationError("Flow channel must match account channel.");
@@ -585,6 +747,7 @@ export async function createChannelFlow(input: CreateChannelFlowInput) {
     const agent = await getChannelAgentRepository(client, organizationId, input.agentId);
     if (!agent) throw new NotFoundError("Channel agent not found.");
     if (agent.channel !== channel || agent.account_id !== account.id) throw new ValidationError("Flow agent must belong to the same channel account.");
+    ensureActionAllowedForAgent(channel, agent.config, actionType);
   }
   return createChannelFlowRepository(client, {
     id: crypto.randomUUID(),
@@ -595,8 +758,8 @@ export async function createChannelFlow(input: CreateChannelFlowInput) {
     channel,
     name: requireNonEmptyString(input.name, "name"),
     objective: requireNonEmptyString(input.objective, "objective"),
-    trigger_type: requireNonEmptyString(input.triggerType, "triggerType"),
-    action_type: requireNonEmptyString(input.actionType, "actionType"),
+    trigger_type: triggerType,
+    action_type: actionType,
     content_type: optionalString(input.contentType, "contentType"),
     prompt_template: optionalString(input.promptTemplate, "promptTemplate"),
     action_config: requireRecord(input.actionConfig, "actionConfig"),
@@ -607,12 +770,22 @@ export async function createChannelFlow(input: CreateChannelFlowInput) {
 export async function updateChannelFlow(organizationId: string, flowId: string, input: UpdateChannelFlowInput) {
   const { client, flow } = await requireChannelFlow(requireNonEmptyString(organizationId, "organizationId"), requireNonEmptyString(flowId, "flowId"));
   const patch: Record<string, unknown> = {};
+  const nextActionType = input.actionType !== undefined ? parseChannelAction(flow.channel, input.actionType) : flow.action_type;
+  if (input.agentId) {
+    const agent = await getChannelAgentRepository(client, flow.organization_id, input.agentId);
+    if (!agent) throw new NotFoundError("Channel agent not found.");
+    if (agent.channel !== flow.channel || agent.account_id !== flow.account_id) throw new ValidationError("Flow agent must belong to the same channel account.");
+    ensureActionAllowedForAgent(flow.channel, agent.config, nextActionType);
+  } else if (flow.agent_id) {
+    const currentAgent = await getChannelAgentRepository(client, flow.organization_id, flow.agent_id);
+    if (currentAgent) ensureActionAllowedForAgent(flow.channel, currentAgent.config, nextActionType);
+  }
   if (input.agentId !== undefined) patch.agent_id = optionalString(input.agentId, "agentId");
   if (input.automationId !== undefined) patch.automation_id = optionalString(input.automationId, "automationId");
   if (input.name !== undefined) patch.name = requireNonEmptyString(input.name, "name");
   if (input.objective !== undefined) patch.objective = requireNonEmptyString(input.objective, "objective");
-  if (input.triggerType !== undefined) patch.trigger_type = requireNonEmptyString(input.triggerType, "triggerType");
-  if (input.actionType !== undefined) patch.action_type = requireNonEmptyString(input.actionType, "actionType");
+  if (input.triggerType !== undefined) patch.trigger_type = parseChannelTrigger(flow.channel, input.triggerType);
+  if (input.actionType !== undefined) patch.action_type = nextActionType;
   if (input.contentType !== undefined) patch.content_type = optionalString(input.contentType, "contentType");
   if (input.promptTemplate !== undefined) patch.prompt_template = optionalString(input.promptTemplate, "promptTemplate");
   if (input.actionConfig !== undefined) patch.action_config = requireRecord(input.actionConfig, "actionConfig");
@@ -819,7 +992,16 @@ export async function getChannelAutomationSnapshot(organizationId: string) {
   if (automations.error) throw new Error(automations.error.message);
 
   return {
-    channels: Object.fromEntries(Object.entries(CHANNEL_ACTIONS).map(([channel, actions]) => [channel, { actions }])),
+    channels: Object.fromEntries(
+      Object.entries(CHANNEL_ACTIONS).map(([channel, actions]) => [
+        channel,
+        {
+          actions,
+          triggers: CHANNEL_TRIGGERS[channel as ChannelKind],
+          agentTypes: getChannelAgentTypes(channel as ChannelKind),
+        },
+      ])
+    ),
     channelSummaries: Object.fromEntries(
       Object.keys(CHANNEL_ACTIONS).map((channel) => [
         channel,

@@ -104,7 +104,7 @@ export function AutomationsPage({ automations }: { automations: Automation[] }) 
       <Card>
         <div className="font-display text-3xl text-slate-950">Automations</div>
         <p className="mt-2 max-w-2xl text-sm text-slate-500">
-          Workflow cards, plus Twilio-powered call bots that you can attach to automations and trigger from this same control room.
+          Workflow cards, plus Twilio call bots with ElevenLabs voice AI that you can attach to automations and trigger from this same control room.
         </p>
       </Card>
 
@@ -136,10 +136,10 @@ export function AutomationsPage({ automations }: { automations: Automation[] }) 
             <div className="flex items-center justify-between gap-4">
               <div>
                 <div className="font-display text-2xl text-slate-950">Call bot control</div>
-                <p className="mt-1 text-sm text-slate-500">Twilio-backed outbound voice bots linked to your automations.</p>
+                <p className="mt-1 text-sm text-slate-500">Twilio outbound voice bots linked to your automations, powered by ElevenLabs for AI calls.</p>
               </div>
               <Badge className={data?.configured ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-700"}>
-                {data?.configured ? "Twilio connected" : "Twilio env missing"}
+                {data?.configured ? "Twilio ready" : "Twilio env missing"}
               </Badge>
             </div>
 
@@ -269,7 +269,7 @@ export function AutomationsPage({ automations }: { automations: Automation[] }) 
               ))}
             </select>
             <Input value={toNumber} onChange={(event) => setToNumber(event.target.value)} placeholder="+5215512345678" />
-            <Button onClick={triggerCall} disabled={!data?.configured}>Launch Twilio call</Button>
+            <Button onClick={triggerCall} disabled={!data?.configured}>Launch call</Button>
           </Card>
         </div>
       </div>

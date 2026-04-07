@@ -51,11 +51,24 @@ import { postCallJob } from "./api/voice/jobs/route.js";
 import { patchChannelAccount, postChannelAccount, removeChannelAccount } from "./api/channels/accounts/route.js";
 import { patchChannelAgent, postChannelAgent, removeChannelAgent } from "./api/channels/agents/route.js";
 import { patchChannelFlow, postChannelFlow, removeChannelFlow } from "./api/channels/flows/route.js";
+import { getMetaOAuthStartUrl, handleMetaOAuthCallback } from "./api/channels/oauth-route.js";
+import {
+  getCustomerSupportInboxSessionRoute,
+  getCustomerSupportInboxSessionsRoute,
+  patchCustomerSupportInboxSessionRoute,
+  postCustomerSupportInboxReplyRoute,
+} from "./api/channels/customer-support-inbox-route.js";
 import { postChannelJob, postCompleteChannelJob, postExecuteChannelJob, postRetryChannelJob } from "./api/channels/jobs/route.js";
+import {
+  getCustomerSupportWidgetConfigRoute,
+  getCustomerSupportWidgetSessionRoute,
+  postCustomerSupportWidgetHandoffRoute,
+  postCustomerSupportWidgetMessageRoute,
+  postCustomerSupportWidgetSessionRoute,
+} from "./api/channels/customer-support-widget-route.js";
 import { handleStatusWebhook } from "./api/webhooks/twilio/status/route.js";
 import { buildTwiML } from "./api/webhooks/twilio/twiml/route.js";
 import { handleGather } from "./api/webhooks/twilio/twiml/gather/route.js";
-import { attachVoiceRealtimeBridge } from "./modules/voice/realtime.js";
 import { ValidationError, NotFoundError, UnauthorizedError } from "./modules/shared/errors.js";
 import { createServiceSupabaseClient } from "./modules/shared/supabase-client.js";
 import { listCallAgents, listCallFlows, listCallJobs } from "./modules/voice/services.js";
@@ -127,6 +140,13 @@ function getPublicRequestUrl(req: express.Request) {
   const fallbackBaseUrl = `${req.protocol}://${req.get("host") ?? "localhost"}`;
   const baseUrl = configuredBaseUrl || fallbackBaseUrl;
   return `${baseUrl}${req.originalUrl}`;
+}
+
+function getSocialOAuthRedirectUri(req: express.Request) {
+  const configuredBaseUrl = process.env.SOCIAL_OAUTH_REDIRECT_BASE_URL?.replace(/\/+$/, "");
+  const fallbackBaseUrl = `${req.protocol}://${req.get("host") ?? "localhost"}`;
+  const baseUrl = configuredBaseUrl || fallbackBaseUrl;
+  return `${baseUrl}/api/channels/oauth/meta/callback`;
 }
 
 // --- Voice API ---
@@ -351,6 +371,122 @@ app.get("/api/channels/jobs", async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// --- Social account OAuth ---
+
+app.get("/api/channels/oauth/meta/start", async (req, res, next) => {
+  try {
+    if (typeof req.query.channel !== "string") throw new ValidationError("channel is required.");
+    const redirectUrl = getMetaOAuthStartUrl({
+      channel: req.query.channel,
+      organizationId: await getOrganizationId(req),
+      redirectUri: getSocialOAuthRedirectUri(req),
+    });
+    res.redirect(302, redirectUrl);
+  } catch (err) { next(err); }
+});
+
+app.get("/api/channels/oauth/meta/callback", async (req, res, next) => {
+  try {
+    if (typeof req.query.error === "string") {
+      throw new ValidationError(req.query.error_description as string || req.query.error);
+    }
+    if (typeof req.query.code !== "string" || typeof req.query.state !== "string") {
+      throw new ValidationError("OAuth callback is missing code or state.");
+    }
+    const account = await handleMetaOAuthCallback({
+      code: req.query.code,
+      state: req.query.state,
+      redirectUri: getSocialOAuthRedirectUri(req),
+    });
+    res.redirect(303, `/automations?connected=${encodeURIComponent(account.channel)}&account=${encodeURIComponent(account.id)}`);
+  } catch (err) { next(err); }
+});
+
+// --- Customer support inbox API ---
+
+app.get("/api/customer-support/inbox/sessions", async (req, res, next) => {
+  try {
+    const pg = parsePagination(req.query);
+    const data = await getCustomerSupportInboxSessionsRoute(await getOrganizationId(req), {
+      accountId: typeof req.query.account_id === "string" ? req.query.account_id : undefined,
+      limit: pg.limit,
+      offset: pg.offset,
+    });
+    res.json({ data, limit: pg.limit, offset: pg.offset });
+  } catch (err) { next(err); }
+});
+
+app.get("/api/customer-support/inbox/sessions/:sessionId", async (req, res, next) => {
+  try {
+    const data = await getCustomerSupportInboxSessionRoute(await getOrganizationId(req), req.params.sessionId);
+    res.json(data);
+  } catch (err) { next(err); }
+});
+
+app.post("/api/customer-support/inbox/sessions/:sessionId/messages", async (req, res, next) => {
+  try {
+    const data = await postCustomerSupportInboxReplyRoute(await getOrganizationId(req), req.params.sessionId, req.body);
+    res.json(data);
+  } catch (err) { next(err); }
+});
+
+app.patch("/api/customer-support/inbox/sessions/:sessionId", async (req, res, next) => {
+  try {
+    const data = await patchCustomerSupportInboxSessionRoute(await getOrganizationId(req), req.params.sessionId, req.body);
+    res.json(data);
+  } catch (err) { next(err); }
+});
+
+// --- Customer support widget API ---
+
+app.get("/api/customer-support/widget/config/:publicWidgetKey", async (req, res, next) => {
+  try {
+    const data = await getCustomerSupportWidgetConfigRoute(
+      req.params.publicWidgetKey,
+      req.get("origin") ?? undefined,
+      typeof req.query.source_url === "string" ? req.query.source_url : undefined
+    );
+    res.json(data);
+  } catch (err) { next(err); }
+});
+
+app.post("/api/customer-support/widget/sessions", async (req, res, next) => {
+  try {
+    const data = await postCustomerSupportWidgetSessionRoute({
+      ...req.body,
+      origin: req.body?.origin ?? req.get("origin") ?? undefined,
+    });
+    res.status(201).json(data);
+  } catch (err) { next(err); }
+});
+
+app.get("/api/customer-support/widget/sessions/:sessionId", async (req, res, next) => {
+  try {
+    const data = await getCustomerSupportWidgetSessionRoute(req.params.sessionId, req.get("origin") ?? undefined);
+    res.json(data);
+  } catch (err) { next(err); }
+});
+
+app.post("/api/customer-support/widget/sessions/:sessionId/messages", async (req, res, next) => {
+  try {
+    const data = await postCustomerSupportWidgetMessageRoute(req.params.sessionId, {
+      ...req.body,
+      origin: req.body?.origin ?? req.get("origin") ?? undefined,
+    });
+    res.json(data);
+  } catch (err) { next(err); }
+});
+
+app.post("/api/customer-support/widget/sessions/:sessionId/handoff", async (req, res, next) => {
+  try {
+    const data = await postCustomerSupportWidgetHandoffRoute(req.params.sessionId, {
+      ...req.body,
+      origin: req.body?.origin ?? req.get("origin") ?? undefined,
+    });
+    res.json(data);
+  } catch (err) { next(err); }
+});
+
 // --- Twilio Webhooks ---
 
 app.post("/api/webhooks/twilio/voice/twiml", async (req, res, next) => {
@@ -400,8 +536,6 @@ const PORT = process.env.PORT ?? 3005;
 const server = app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
-
-attachVoiceRealtimeBridge(server);
 
 
 

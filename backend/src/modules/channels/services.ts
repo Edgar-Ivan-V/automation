@@ -26,11 +26,14 @@
 
 import { getChannelConnector } from "./connectors.js";
 import {
+  createAppointmentFromChannelToolRepository,
   createChannelAccountRepository,
   createChannelAgentRepository,
   createChannelFlowRepository,
   createChannelJobEventRepository,
   createChannelJobRepository,
+  createCustomerSupportMessageRepository,
+  createCustomerSupportSessionRepository,
   deleteChannelAccountRepository,
   deleteChannelAgentRepository,
   deleteChannelFlowRepository,
@@ -38,10 +41,15 @@ import {
   getChannelAgentRepository,
   getChannelFlowRepository,
   getChannelJobRepository,
+  getCustomerSupportAccountByWidgetKeyRepository,
+  getCustomerSupportSessionRepository,
   listChannelAccountsRepository,
   listChannelAgentsRepository,
   listChannelFlowsRepository,
   listChannelJobsRepository,
+  listCustomerSupportSessionsRepository,
+  listCustomerSupportMessagesRepository,
+  updateCustomerSupportSessionRepository,
   updateChannelAccountRepository,
   updateChannelAgentRepository,
   updateChannelFlowRepository,
@@ -62,9 +70,15 @@ import type {
   ChannelAccountStatus,
   ChannelBotStatus,
   ChannelFlow,
+  ChannelJob,
   ChannelJobOutcome,
   ChannelJobStatus,
   ChannelKind,
+  CreateCustomerSupportWidgetSessionInput,
+  CustomerSupportMessage,
+  CustomerSupportMessageType,
+  CustomerSupportSession,
+  CustomerSupportSessionStatus,
   ChannelSummary,
   ChannelSummarySection,
   CompleteChannelJobInput,
@@ -72,6 +86,11 @@ import type {
   CreateChannelAgentInput,
   CreateChannelFlowInput,
   CreateChannelJobInput,
+  ListCustomerSupportInboxSessionsInput,
+  RequestCustomerSupportHandoffInput,
+  SendCustomerSupportInboxReplyInput,
+  SendCustomerSupportWidgetMessageInput,
+  UpdateCustomerSupportInboxSessionInput,
   UpdateChannelAccountInput,
   UpdateChannelAgentInput,
   UpdateChannelFlowInput
@@ -80,6 +99,7 @@ import type {
 const accountStatuses = new Set<ChannelAccountStatus>(["draft", "connected", "disconnected", "error"]);
 const botStatuses = new Set<ChannelBotStatus>(["draft", "active", "paused"]);
 const jobStatuses = new Set<ChannelJobStatus>(["draft", "queued", "scheduled", "running", "completed", "failed", "canceled", "requires_auth"]);
+const customerSupportSessionStatuses = new Set<CustomerSupportSessionStatus>(["active", "handoff_requested", "resolved", "closed"]);
 
 function normalizeStoredChannel(value: unknown): ChannelKind {
   if (value === "automations") return "customer_support";
@@ -120,12 +140,96 @@ function parseJobStatus(value: unknown) {
   return value as ChannelJobStatus;
 }
 
+function parseCustomerSupportSessionStatus(value: unknown) {
+  if (typeof value !== "string" || !customerSupportSessionStatuses.has(value as CustomerSupportSessionStatus)) {
+    throw new ValidationError("status must be one of active, handoff_requested, resolved, closed.");
+  }
+  return value as CustomerSupportSessionStatus;
+}
+
 function requireRecord(value: unknown, field: string) {
   if (value == null) return {};
   if (typeof value !== "object" || Array.isArray(value)) {
     throw new ValidationError(`${field} must be an object.`);
   }
   return value as Record<string, unknown>;
+}
+
+function optionalArrayOfStrings(value: unknown, field: string) {
+  if (value == null) return [] as string[];
+  if (!Array.isArray(value)) throw new ValidationError(`${field} must be an array of strings.`);
+  return value
+    .map((item) => {
+      if (typeof item !== "string") throw new ValidationError(`${field} must be an array of strings.`);
+      return item.trim();
+    })
+    .filter(Boolean);
+}
+
+function normalizeOriginValue(value: string | null | undefined) {
+  if (!value) return null;
+  try {
+    return new URL(value).origin;
+  } catch {
+    return null;
+  }
+}
+
+function buildDefaultOriginFromHandle(handle: string | null | undefined) {
+  if (!handle) return null;
+  const trimmed = handle.trim();
+  if (!trimmed) return null;
+  const candidate = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  return normalizeOriginValue(candidate);
+}
+
+function mergeUniqueStrings(values: Array<string | null | undefined>) {
+  return [...new Set(values.filter((value): value is string => Boolean(value && value.trim())).map((value) => value.trim()))];
+}
+
+function buildCustomerSupportMetadata(name: string, handle: string | null, rawMetadata: unknown, existingMetadata?: Record<string, unknown> | null) {
+  const inputMetadata = requireRecord(rawMetadata, "metadata");
+  const currentMetadata = existingMetadata ?? {};
+  const existingWidget = requireRecord(currentMetadata.widget, "metadata.widget");
+  const inputWidget = requireRecord(inputMetadata.widget, "metadata.widget");
+  const defaultOrigin = buildDefaultOriginFromHandle(handle);
+  const allowedOrigins = mergeUniqueStrings([
+    ...optionalArrayOfStrings(currentMetadata.allowedOrigins, "metadata.allowedOrigins"),
+    ...optionalArrayOfStrings(inputMetadata.allowedOrigins, "metadata.allowedOrigins"),
+    defaultOrigin,
+  ]);
+
+  return {
+    ...currentMetadata,
+    ...inputMetadata,
+    publicWidgetKey:
+      optionalString(inputMetadata.publicWidgetKey, "metadata.publicWidgetKey")
+      ?? optionalString(currentMetadata.publicWidgetKey, "metadata.publicWidgetKey")
+      ?? `csw_${crypto.randomUUID().replace(/-/g, "")}`,
+    allowedOrigins,
+    widget: {
+      title:
+        optionalString(inputWidget.title, "metadata.widget.title")
+        ?? optionalString(existingWidget.title, "metadata.widget.title")
+        ?? name,
+      greeting:
+        optionalString(inputWidget.greeting, "metadata.widget.greeting")
+        ?? optionalString(existingWidget.greeting, "metadata.widget.greeting")
+        ?? "Hola, soy el asistente del sitio. Cuéntame qué necesitas y te ayudo desde aquí.",
+      agentLabel:
+        optionalString(inputWidget.agentLabel, "metadata.widget.agentLabel")
+        ?? optionalString(existingWidget.agentLabel, "metadata.widget.agentLabel")
+        ?? "Asistente web",
+      accentColor:
+        optionalString(inputWidget.accentColor, "metadata.widget.accentColor")
+        ?? optionalString(existingWidget.accentColor, "metadata.widget.accentColor")
+        ?? "#2563eb",
+    },
+    support: {
+      ...(requireRecord(currentMetadata.support, "metadata.support")),
+      ...(requireRecord(inputMetadata.support, "metadata.support")),
+    },
+  } satisfies Record<string, unknown>;
 }
 
 function parseEnumValue(value: unknown, allowedValues: string[], field: string, defaultValue: string) {
@@ -170,6 +274,10 @@ function normalizeChannelAgentConfig(channel: ChannelKind, rawConfig: unknown, r
       field.options[0]?.value ?? ""
     );
   }
+  normalizedConfig.llmProvider = "openrouter";
+  normalizedConfig.llmModel = optionalString(config.llmModel, "config.llmModel") ?? process.env.OPENROUTER_MODEL?.trim() ?? "openai/gpt-4.1-mini";
+  normalizedConfig.tools = optionalArrayOfStrings(config.tools, "config.tools");
+  normalizedConfig.toolInstructions = optionalString(config.toolInstructions, "config.toolInstructions") ?? "";
 
   return normalizedConfig;
 }
@@ -186,6 +294,153 @@ function ensureActionAllowedForAgent(channel: ChannelKind, agentConfig: Record<s
   if (!definition.allowed_action_types.includes(actionType)) {
     throw new ValidationError("Selected agent type cannot run this action.");
   }
+}
+
+function getCustomerSupportAllowedOrigins(metadata: Record<string, unknown>) {
+  return mergeUniqueStrings(optionalArrayOfStrings(metadata.allowedOrigins, "metadata.allowedOrigins").map((value) => normalizeOriginValue(value) ?? value));
+}
+
+function assertCustomerSupportOrigin(metadata: Record<string, unknown>, origin: string | null, sourceUrl?: string | null) {
+  const allowedOrigins = getCustomerSupportAllowedOrigins(metadata);
+  if (!allowedOrigins.length) return;
+  const normalizedOrigin = normalizeOriginValue(origin) ?? normalizeOriginValue(sourceUrl ?? null);
+  if (!normalizedOrigin || !allowedOrigins.includes(normalizedOrigin)) {
+    throw new ValidationError("Origin is not allowed for this customer support widget.");
+  }
+}
+
+function getCustomerSupportWidgetSettings(account: ChannelAccount) {
+  const metadata = requireRecord(account.metadata, "metadata");
+  const widget = requireRecord(metadata.widget, "metadata.widget");
+  return {
+    publicWidgetKey: optionalString(metadata.publicWidgetKey, "metadata.publicWidgetKey"),
+    allowedOrigins: getCustomerSupportAllowedOrigins(metadata),
+    title: optionalString(widget.title, "metadata.widget.title") ?? account.name,
+    greeting: optionalString(widget.greeting, "metadata.widget.greeting") ?? "Hola, soy el asistente del sitio. Cuéntame qué necesitas y te ayudo desde aquí.",
+    agentLabel: optionalString(widget.agentLabel, "metadata.widget.agentLabel") ?? "Asistente web",
+    accentColor: optionalString(widget.accentColor, "metadata.widget.accentColor") ?? "#2563eb",
+  };
+}
+
+function chooseCustomerSupportAction(text: string) {
+  const normalizedText = text.toLowerCase();
+  if (/(humano|asesor|persona|agente|representante|llamarme|speak to someone)/i.test(normalizedText)) return "handoff_agent";
+  if (/(agenda|agendar|cita|reservar|reserva|demo|reuni[oÃ³]n|meeting|appointment|book)/i.test(normalizedText)) return "schedule_appointment";
+  if (/(ticket|bug|error|falla|fallo|problema|reembolso|refund|factura|billing|cancelaci[oó]n|cancel)/i.test(normalizedText)) return "capture_ticket";
+  if (/(precio|pricing|horario|hours|documentaci[oó]n|docs|faq|ayuda|help|como|cómo|integraci[oó]n|env[ií]o|shipping)/i.test(normalizedText)) return "suggest_article";
+  return "answer_chat";
+}
+
+function buildCustomerSupportArticle(text: string, account: ChannelAccount) {
+  const normalizedText = text.toLowerCase();
+  const baseUrl = buildDefaultOriginFromHandle(account.handle) ?? "https://support.example.com";
+  if (/(factura|billing|reembolso|refund)/i.test(normalizedText)) {
+    return { title: "Facturación y reembolsos", slug: "billing-refunds" };
+  }
+  if (/(env[ií]o|shipping|entrega)/i.test(normalizedText)) {
+    return { title: "Seguimiento de envíos", slug: "shipping-tracking" };
+  }
+  if (/(integraci[oó]n|api|webhook|sdk|instalaci[oó]n)/i.test(normalizedText)) {
+    return { title: "Integración e instalación", slug: "integration-setup" };
+  }
+  return { title: "Centro de ayuda general", slug: "help-center" };
+}
+
+function buildCustomerSupportTicketId() {
+  return `SUP-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+}
+
+function summarizeCustomerSupportSession(messages: CustomerSupportMessage[]) {
+  const visitorMessages = messages.filter((message) => message.role === "visitor" && message.content).slice(-3);
+  if (!visitorMessages.length) return null;
+  return visitorMessages.map((message) => message.content).join(" | ").slice(0, 280);
+}
+
+function optionalDateString(value: unknown, field: string) {
+  const input = optionalString(value, field);
+  if (!input) return null;
+  const parsed = new Date(input);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new ValidationError(`${field} must be a valid date.`);
+  }
+  return parsed.toISOString();
+}
+
+function parseDurationMinutes(value: unknown, defaultValue = 30) {
+  if (value == null || value === "") return defaultValue;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return defaultValue;
+  return Math.min(Math.max(Math.round(parsed), 15), 240);
+}
+
+function readToolString(payload: Record<string, unknown>, actionConfig: Record<string, unknown>, keys: string[], field: string) {
+  for (const key of keys) {
+    const value = optionalString(payload[key] ?? actionConfig[key], field);
+    if (value) return value;
+  }
+  return null;
+}
+
+async function executeScheduleAppointmentTool(
+  client: ReturnType<typeof requireServiceSupabaseClient>,
+  organizationId: string,
+  job: ChannelJob,
+  flow: ChannelFlow
+) {
+  const payload = requireRecord(job.payload, "job.payload");
+  const actionConfig = requireRecord(flow.action_config, "flow.action_config");
+  const defaultStartsAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+  const startsAt =
+    optionalDateString(payload.appointmentStartsAt ?? payload.startsAt ?? actionConfig.appointmentStartsAt ?? actionConfig.startsAt, "appointmentStartsAt")
+    ?? defaultStartsAt;
+  const durationMinutes = parseDurationMinutes(payload.appointmentDurationMinutes ?? payload.durationMinutes ?? actionConfig.appointmentDurationMinutes ?? actionConfig.durationMinutes);
+  const startsAtDate = new Date(startsAt);
+  const endsAt = new Date(startsAtDate.getTime() + durationMinutes * 60 * 1000).toISOString();
+  const appointmentTitle =
+    readToolString(payload, actionConfig, ["appointmentTitle", "title", "targetRef"], "appointmentTitle")
+    ?? job.target_ref
+    ?? job.title
+    ?? "Cita agendada por agente";
+  const location = readToolString(payload, actionConfig, ["appointmentLocation", "location"], "appointmentLocation");
+  const prompt = readToolString(payload, actionConfig, ["prompt", "instructions", "notes"], "appointmentNotes");
+  const notes = [
+    prompt,
+    job.target_ref ? `Referencia: ${job.target_ref}` : null,
+    `Origen: ${job.channel}/${flow.action_type}`,
+    `Job: ${job.id}`,
+  ].filter(Boolean).join("\n");
+
+  const appointment = await createAppointmentFromChannelToolRepository(client, {
+    organization_id: organizationId,
+    contact_id: job.contact_id,
+    title: appointmentTitle,
+    starts_at: startsAt,
+    ends_at: endsAt,
+    status: "scheduled",
+    location,
+    notes: notes || null,
+  });
+
+  return {
+    outcome: "scheduled" as ChannelJobOutcome,
+    summary: `Cita agendada en modo prueba para ${startsAtDate.toLocaleString("es-MX", { dateStyle: "medium", timeStyle: "short" })}.`,
+    resultPayload: {
+      mode: "internal_tool",
+      tool: "schedule_appointment",
+      channel: job.channel,
+      actionType: flow.action_type,
+      appointment,
+      source: {
+        jobId: job.id,
+        flowId: flow.id,
+        accountId: job.account_id,
+        agentId: job.agent_id,
+        targetRef: job.target_ref,
+      },
+      input: payload,
+    },
+    isPreview: false,
+  };
 }
 
 function buildPreviewResultPayload(channel: ChannelKind, actionType: string, job: { title: string; target_ref: string | null; payload: Record<string, unknown> }) {
@@ -471,6 +726,7 @@ function buildPreviewResultPayload(channel: ChannelKind, actionType: string, job
 
 function buildExecutionPreview(actionType: string) {
   if (actionType.startsWith("publish")) return { outcome: "published", summary: "Preview generated locally. Connect the platform provider to publish for real." } as const;
+  if (actionType.startsWith("upload")) return { outcome: "published", summary: "Preview generated locally. Connect the platform provider to upload for real." } as const;
   if (actionType.startsWith("send")) return { outcome: "sent", summary: "Preview generated locally. Connect the provider to deliver the message for real." } as const;
   if (actionType.startsWith("reply")) return { outcome: "replied", summary: "Preview generated locally. Connect the platform inbox provider to reply for real." } as const;
   if (actionType.includes("lead")) return { outcome: "lead_captured", summary: "Lead handling simulated locally. Connect CRM or provider to complete the flow." } as const;
@@ -534,6 +790,56 @@ function buildChannelSummary(channel: ChannelKind, input: {
             { key: "reels_published", label: "Reels published", value: countJobsByAction(jobs, "publish_reel"), description: "Short-form video assets." },
             { key: "media_sent", label: "Media sent", value: countJobsByAction(jobs, "send_media"), description: "Images or videos sent in DM flows." },
             { key: "dms_replied", label: "DMs replied", value: countJobsByAction(jobs, "reply_dm"), description: "Inbox conversations handled." },
+          ],
+        },
+      ];
+      break;
+    case "linkedin":
+      sections = [
+        executionSection,
+        {
+          key: "linkedin_growth",
+          title: "LinkedIn growth",
+          description: "Company posts, comment engagement, messages, leads and paid campaigns.",
+          items: [
+            { key: "posts_published", label: "Posts published", value: countJobsByAction(jobs, "publish_post"), description: "Company or profile posts shipped." },
+            { key: "comments_replied", label: "Comments replied", value: countJobsByAction(jobs, "reply_comment"), description: "Comment replies completed." },
+            { key: "messages_sent", label: "Messages sent", value: countJobsByAction(jobs, "send_message"), description: "Follow-up messages sent." },
+            { key: "leads_captured", label: "Leads captured", value: countJobsByAction(jobs, "capture_lead"), description: "Lead capture jobs from LinkedIn activity." },
+            { key: "campaigns_managed", label: "Campaigns managed", value: countJobsByAction(jobs, "manage_ad_campaign"), description: "Paid campaign operations." },
+          ],
+        },
+      ];
+      break;
+    case "youtube":
+      sections = [
+        executionSection,
+        {
+          key: "youtube_video_ops",
+          title: "YouTube video ops",
+          description: "Uploads, comment replies, live chat and media workflow activity.",
+          items: [
+            { key: "videos_uploaded", label: "Videos uploaded", value: countJobsByAction(jobs, "upload_video"), description: "Videos uploaded or staged." },
+            { key: "comments_replied", label: "Comments replied", value: countJobsByAction(jobs, "reply_comment"), description: "Video comments handled." },
+            { key: "live_chat_replies", label: "Live chat replies", value: countJobsByAction(jobs, "reply_live_chat"), description: "Live chat messages handled." },
+            { key: "media_references", label: "Media references", value: countJobsByAction(jobs, "send_media"), description: "Media references attached to workflows." },
+          ],
+        },
+      ];
+      break;
+    case "telegram":
+      sections = [
+        executionSection,
+        {
+          key: "telegram_bot_ops",
+          title: "Telegram bot ops",
+          description: "Bot messages, replies, media, broadcasts and human escalation.",
+          items: [
+            { key: "messages_sent", label: "Messages sent", value: countJobsByAction(jobs, "send_message"), description: "Telegram messages sent." },
+            { key: "messages_replied", label: "Messages replied", value: countJobsByAction(jobs, "reply_message"), description: "Telegram inbound messages handled." },
+            { key: "media_sent", label: "Media sent", value: countJobsByAction(jobs, "send_media"), description: "Images or videos sent by the bot." },
+            { key: "broadcasts_sent", label: "Broadcasts sent", value: countJobsByAction(jobs, "send_broadcast"), description: "Broadcast jobs sent to approved chats." },
+            { key: "handoffs", label: "Human handoffs", value: countJobsByAction(jobs, "handoff_agent"), description: "Chats escalated to humans." },
           ],
         },
       ];
@@ -695,6 +1001,104 @@ async function requireChannelJob(organizationId: string, jobId: string) {
   return { client, job };
 }
 
+async function resolveCustomerSupportRuntime(client: ReturnType<typeof requireServiceSupabaseClient>, organizationId: string, accountId: string) {
+  const [agents, flows] = await Promise.all([
+    listChannelAgentsRepository(client, organizationId, "customer_support"),
+    listChannelFlowsRepository(client, organizationId, "customer_support"),
+  ]);
+  const accountAgents = agents.filter((agent) => agent.account_id === accountId && agent.status === "active");
+  const accountFlows = flows.filter((flow) => flow.account_id === accountId && flow.status === "active");
+  const defaultAgent = accountAgents[0] ?? null;
+  const defaultFlow = accountFlows.find((flow) => flow.action_type === "answer_chat") ?? accountFlows[0] ?? null;
+
+  return {
+    agent: defaultAgent,
+    flow: defaultFlow,
+    flowsByAction: Object.fromEntries(accountFlows.map((flow) => [flow.action_type, flow])) as Record<string, (typeof accountFlows)[number] | undefined>,
+  };
+}
+
+function buildCustomerSupportAssistantPayload(actionType: string, text: string, account: ChannelAccount, sessionId: string, agentName: string | null) {
+  if (actionType === "suggest_article") {
+    const article = buildCustomerSupportArticle(text, account);
+    const baseUrl = buildDefaultOriginFromHandle(account.handle) ?? "https://support.example.com";
+    return {
+      summary: `Compartí un artículo de ayuda sobre ${article.title.toLowerCase()}.`,
+      reply: `Te comparto un artículo que debería resolver esto más rápido: ${article.title}. Si después de revisarlo sigues con el problema, te ayudo a escalarlo.`,
+      messageType: "article" as CustomerSupportMessageType,
+      metadata: {
+        article: {
+          title: article.title,
+          slug: article.slug,
+          url: `${baseUrl.replace(/\/+$/, "")}/help/${article.slug}`,
+        },
+        sessionId,
+        agentName,
+      },
+    };
+  }
+
+  if (actionType === "capture_ticket") {
+    const ticketId = buildCustomerSupportTicketId();
+    return {
+      summary: `Abrí el ticket ${ticketId} para seguimiento humano.`,
+      reply: `Ya levanté el ticket ${ticketId}. Un miembro del equipo lo revisará y seguirá el caso contigo.`,
+      messageType: "ticket" as CustomerSupportMessageType,
+      metadata: {
+        ticket: {
+          id: ticketId,
+          queue: "support",
+          priority: "normal",
+        },
+        sessionId,
+        agentName,
+      },
+    };
+  }
+
+  if (actionType === "schedule_appointment") {
+    return {
+      summary: "Agende una cita tentativa desde el asistente del sitio.",
+      reply: "Deje una cita tentativa registrada. Si quieres otro horario, dime la fecha y hora exacta y la ajustamos.",
+      messageType: "text" as CustomerSupportMessageType,
+      metadata: {
+        appointment: {
+          status: "scheduled_preview",
+          source: "website_chat",
+        },
+        sessionId,
+        agentName,
+      },
+    };
+  }
+
+  if (actionType === "handoff_agent") {
+    return {
+      summary: "Escalé la conversación a una persona del equipo.",
+      reply: "Te voy a pasar con una persona del equipo para seguir este caso contigo. Mientras tanto, ya dejé el contexto listo para que no tengas que repetir todo.",
+      messageType: "handoff" as CustomerSupportMessageType,
+      metadata: {
+        handoff: {
+          status: "requested",
+          team: "support",
+        },
+        sessionId,
+        agentName,
+      },
+    };
+  }
+
+  return {
+    summary: "Respondí el chat desde el asistente del sitio.",
+    reply: `Gracias por escribir a ${account.name}. Ya revisé tu mensaje y puedo ayudarte desde aquí. Si lo prefieres, también puedo compartirte ayuda guiada o escalar el caso con una persona.`,
+    messageType: "text" as CustomerSupportMessageType,
+    metadata: {
+      sessionId,
+      agentName,
+    },
+  };
+}
+
 export async function listChannelAccounts(organizationId: string, channel?: ChannelKind, pagination?: { limit: number; offset: number }) {
   const client = requireServiceSupabaseClient();
   const accounts = await listChannelAccountsRepository(client, requireNonEmptyString(organizationId, "organizationId"), channel, pagination);
@@ -704,16 +1108,21 @@ export async function listChannelAccounts(organizationId: string, channel?: Chan
 export async function createChannelAccount(input: CreateChannelAccountInput) {
   const client = requireServiceSupabaseClient();
   const channel = parseChannel(input.channel);
+  const name = requireNonEmptyString(input.name, "name");
+  const handle = optionalString(input.handle, "handle");
+  const metadata = channel === "customer_support"
+    ? buildCustomerSupportMetadata(name, handle, input.metadata, null)
+    : requireRecord(input.metadata, "metadata");
   return createChannelAccountRepository(client, {
     id: crypto.randomUUID(),
     organization_id: requireNonEmptyString(input.organizationId, "organizationId"),
     channel,
-    name: requireNonEmptyString(input.name, "name"),
-    handle: optionalString(input.handle, "handle"),
+    name,
+    handle,
     provider: optionalString(input.provider, "provider") ?? "native",
     external_account_id: optionalString(input.externalAccountId, "externalAccountId"),
     status: parseAccountStatus(input.status),
-    metadata: requireRecord(input.metadata, "metadata"),
+    metadata,
     connected_at: new Date().toISOString()
   });
 }
@@ -721,12 +1130,18 @@ export async function createChannelAccount(input: CreateChannelAccountInput) {
 export async function updateChannelAccount(organizationId: string, accountId: string, input: UpdateChannelAccountInput) {
   const { client, account } = await requireChannelAccount(requireNonEmptyString(organizationId, "organizationId"), requireNonEmptyString(accountId, "accountId"));
   const patch: Record<string, unknown> = {};
-  if (input.name !== undefined) patch.name = requireNonEmptyString(input.name, "name");
-  if (input.handle !== undefined) patch.handle = optionalString(input.handle, "handle");
+  const nextName = input.name !== undefined ? requireNonEmptyString(input.name, "name") : account.name;
+  const nextHandle = input.handle !== undefined ? optionalString(input.handle, "handle") : account.handle;
+  if (input.name !== undefined) patch.name = nextName;
+  if (input.handle !== undefined) patch.handle = nextHandle;
   if (input.provider !== undefined) patch.provider = optionalString(input.provider, "provider") ?? account.provider;
   if (input.externalAccountId !== undefined) patch.external_account_id = optionalString(input.externalAccountId, "externalAccountId");
   if (input.status !== undefined) patch.status = parseAccountStatus(input.status);
-  if (input.metadata !== undefined) patch.metadata = requireRecord(input.metadata, "metadata");
+  if (input.metadata !== undefined) {
+    patch.metadata = normalizeStoredChannel(account.channel) === "customer_support"
+      ? buildCustomerSupportMetadata(nextName, nextHandle, input.metadata, requireRecord(account.metadata, "metadata"))
+      : requireRecord(input.metadata, "metadata");
+  }
   return updateChannelAccountRepository(client, account.organization_id, account.id, patch);
 }
 
@@ -943,7 +1358,9 @@ export async function executeChannelJob(organizationId: string, jobId: string) {
   const connector = getChannelConnector(normalizedStartedChannel);
   let result: { outcome: ChannelJobOutcome; summary: string; resultPayload: Record<string, unknown>; isPreview: boolean };
 
-  if (connector) {
+  if (flow.action_type === "schedule_appointment") {
+    result = await executeScheduleAppointmentTool(client, normalizedOrganizationId, started, flow);
+  } else if (connector) {
     const real = await connector.execute(started, flow);
     result = { outcome: real.outcome, summary: real.summary, resultPayload: real.resultPayload, isPreview: false };
   } else {
@@ -1029,6 +1446,324 @@ export async function markChannelJobCompleted(input: CompleteChannelJobInput) {
   });
 
   return updated;
+}
+
+export async function getCustomerSupportWidgetConfig(publicWidgetKey: string, origin?: string, sourceUrl?: string) {
+  const client = requireServiceSupabaseClient();
+  const normalizedPublicWidgetKey = requireNonEmptyString(publicWidgetKey, "publicWidgetKey");
+  const account = await getCustomerSupportAccountByWidgetKeyRepository(client, normalizedPublicWidgetKey);
+  if (!account || normalizeStoredChannel(account.channel) !== "customer_support") {
+    throw new NotFoundError("Customer support widget not found.");
+  }
+
+  const widget = getCustomerSupportWidgetSettings(account);
+  assertCustomerSupportOrigin(requireRecord(account.metadata, "metadata"), origin ?? null, sourceUrl ?? null);
+  const runtime = await resolveCustomerSupportRuntime(client, account.organization_id, account.id);
+
+  return {
+    accountId: account.id,
+    name: account.name,
+    handle: account.handle,
+    widget: {
+      title: widget.title,
+      greeting: widget.greeting,
+      agentLabel: runtime.agent?.name ?? widget.agentLabel,
+      accentColor: widget.accentColor,
+    },
+    capabilities: {
+      canAnswerChat: Boolean(runtime.flowsByAction.answer_chat),
+      canScheduleAppointment: Boolean(runtime.flowsByAction.schedule_appointment),
+      canSuggestArticle: Boolean(runtime.flowsByAction.suggest_article),
+      canCreateTicket: Boolean(runtime.flowsByAction.capture_ticket),
+      canSendMedia: Boolean(runtime.flowsByAction.send_media),
+      canHandoff: Boolean(runtime.flowsByAction.handoff_agent),
+    },
+  };
+}
+
+export async function createCustomerSupportWidgetSession(input: CreateCustomerSupportWidgetSessionInput) {
+  const client = requireServiceSupabaseClient();
+  const publicWidgetKey = requireNonEmptyString(input.publicWidgetKey, "publicWidgetKey");
+  const account = await getCustomerSupportAccountByWidgetKeyRepository(client, publicWidgetKey);
+  if (!account || normalizeStoredChannel(account.channel) !== "customer_support") {
+    throw new NotFoundError("Customer support widget not found.");
+  }
+  assertCustomerSupportOrigin(requireRecord(account.metadata, "metadata"), input.origin ?? null, input.sourceUrl ?? null);
+
+  const runtime = await resolveCustomerSupportRuntime(client, account.organization_id, account.id);
+  const session = await createCustomerSupportSessionRepository(client, {
+    id: crypto.randomUUID(),
+    organization_id: account.organization_id,
+    account_id: account.id,
+    agent_id: runtime.agent?.id ?? null,
+    flow_id: runtime.flow?.id ?? null,
+    public_widget_key: publicWidgetKey,
+    visitor_id: optionalString(input.visitorId, "visitorId"),
+    visitor_name: optionalString(input.visitorName, "visitorName"),
+    visitor_email: optionalString(input.visitorEmail, "visitorEmail"),
+    visitor_metadata: requireRecord(input.visitorMetadata, "visitorMetadata"),
+    source_url: optionalString(input.sourceUrl, "sourceUrl"),
+    origin: normalizeOriginValue(input.origin) ?? normalizeOriginValue(input.sourceUrl ?? null),
+    status: "active",
+    summary: null,
+    handoff_requested_at: null,
+    last_message_at: new Date().toISOString(),
+  });
+  const messages = await listCustomerSupportMessagesRepository(client, session.id);
+  const widget = getCustomerSupportWidgetSettings(account);
+
+  return {
+    session,
+    messages,
+    widget: {
+      title: widget.title,
+      greeting: widget.greeting,
+      agentLabel: runtime.agent?.name ?? widget.agentLabel,
+      accentColor: widget.accentColor,
+    },
+  };
+}
+
+export async function getCustomerSupportWidgetSession(sessionId: string, origin?: string) {
+  const client = requireServiceSupabaseClient();
+  const session = await getCustomerSupportSessionRepository(client, requireNonEmptyString(sessionId, "sessionId"));
+  if (!session) throw new NotFoundError("Customer support session not found.");
+  if (!session.account || normalizeStoredChannel(session.account.channel) !== "customer_support") {
+    throw new NotFoundError("Customer support session account not found.");
+  }
+  assertCustomerSupportOrigin(requireRecord(session.account.metadata, "metadata"), origin ?? session.origin ?? null, session.source_url);
+  const messages = await listCustomerSupportMessagesRepository(client, session.id);
+  return { session, messages };
+}
+
+export async function sendCustomerSupportWidgetMessage(input: SendCustomerSupportWidgetMessageInput) {
+  const client = requireServiceSupabaseClient();
+  const session = await getCustomerSupportSessionRepository(client, requireNonEmptyString(input.sessionId, "sessionId"));
+  if (!session) throw new NotFoundError("Customer support session not found.");
+  if (!session.account || normalizeStoredChannel(session.account.channel) !== "customer_support") {
+    throw new NotFoundError("Customer support account not found.");
+  }
+
+  assertCustomerSupportOrigin(requireRecord(session.account.metadata, "metadata"), input.origin ?? session.origin ?? null, session.source_url);
+  const text = requireNonEmptyString(input.text, "text");
+  const visitorMessage = await createCustomerSupportMessageRepository(client, {
+    id: crypto.randomUUID(),
+    organization_id: session.organization_id,
+    session_id: session.id,
+    role: "visitor",
+    message_type: "text",
+    content: text,
+    metadata: requireRecord(input.metadata, "metadata"),
+  });
+
+  const runtime = await resolveCustomerSupportRuntime(client, session.organization_id, session.account_id);
+  const requestedAction = chooseCustomerSupportAction(text);
+  const flow = runtime.flowsByAction[requestedAction]
+    ?? runtime.flowsByAction.answer_chat
+    ?? runtime.flow;
+  if (!flow) throw new ValidationError("No active customer support routine is configured for this account.");
+  const assistantPayload = buildCustomerSupportAssistantPayload(flow.action_type, text, session.account as ChannelAccount, session.id, runtime.agent?.name ?? null);
+
+  const executedJob = await executeChannelJob(
+    session.organization_id,
+    (
+      await createChannelJob({
+        organizationId: session.organization_id,
+        accountId: session.account_id,
+        flowId: flow.id,
+        agentId: runtime.agent?.id ?? session.agent_id ?? undefined,
+        channel: "customer_support",
+        title: `${assistantPayload.messageType === "ticket" ? "Ticket" : assistantPayload.messageType === "article" ? "Ayuda" : assistantPayload.messageType === "handoff" ? "Handoff" : "Chat"} · ${text.slice(0, 48)}`,
+        targetRef: `session:${session.id}`,
+        payload: {
+          sessionId: session.id,
+          message: text,
+          visitorId: session.visitor_id,
+          visitorName: session.visitor_name,
+          visitorEmail: session.visitor_email,
+          origin: input.origin ?? session.origin,
+        },
+      })
+    ).id
+  );
+
+  const assistantMessage = await createCustomerSupportMessageRepository(client, {
+    id: crypto.randomUUID(),
+    organization_id: session.organization_id,
+    session_id: session.id,
+    role: "assistant",
+    message_type: assistantPayload.messageType,
+    content: assistantPayload.reply,
+    metadata: {
+      ...assistantPayload.metadata,
+      jobId: executedJob.id,
+      flowId: flow.id,
+      actionType: flow.action_type,
+      preview: executedJob.result_payload,
+    },
+  });
+
+  const allMessages = await listCustomerSupportMessagesRepository(client, session.id);
+  const nextStatus =
+    flow.action_type === "handoff_agent" ? "handoff_requested"
+    : flow.action_type === "capture_ticket" ? "resolved"
+    : session.status;
+  const updatedSession = await updateCustomerSupportSessionRepository(client, session.id, {
+    agent_id: runtime.agent?.id ?? session.agent_id,
+    flow_id: flow.id,
+    status: nextStatus,
+    last_message_at: new Date().toISOString(),
+    summary: summarizeCustomerSupportSession(allMessages),
+    handoff_requested_at: nextStatus === "handoff_requested" ? new Date().toISOString() : session.handoff_requested_at,
+  });
+
+  return {
+    session: updatedSession,
+    visitorMessage,
+    assistantMessage,
+    job: executedJob,
+    messages: await listCustomerSupportMessagesRepository(client, session.id),
+  };
+}
+
+export async function requestCustomerSupportHandoff(input: RequestCustomerSupportHandoffInput) {
+  const client = requireServiceSupabaseClient();
+  const session = await getCustomerSupportSessionRepository(client, requireNonEmptyString(input.sessionId, "sessionId"));
+  if (!session) throw new NotFoundError("Customer support session not found.");
+  if (!session.account || normalizeStoredChannel(session.account.channel) !== "customer_support") {
+    throw new NotFoundError("Customer support account not found.");
+  }
+  assertCustomerSupportOrigin(requireRecord(session.account.metadata, "metadata"), input.origin ?? session.origin ?? null, session.source_url);
+
+  const reason = optionalString(input.reason, "reason") ?? "El visitante solicitó hablar con una persona.";
+  const systemMessage = await createCustomerSupportMessageRepository(client, {
+    id: crypto.randomUUID(),
+    organization_id: session.organization_id,
+    session_id: session.id,
+    role: "assistant",
+    message_type: "handoff",
+    content: "Voy a escalar esta conversación con una persona del equipo. Ya dejé el contexto listo para que continúen desde donde se quedó el chat.",
+    metadata: {
+      reason,
+      ...(requireRecord(input.metadata, "metadata")),
+    },
+  });
+  const updatedSession = await updateCustomerSupportSessionRepository(client, session.id, {
+    status: "handoff_requested",
+    handoff_requested_at: new Date().toISOString(),
+    last_message_at: new Date().toISOString(),
+    summary: reason,
+  });
+  return {
+    session: updatedSession,
+    message: systemMessage,
+    messages: await listCustomerSupportMessagesRepository(client, session.id),
+  };
+}
+
+export async function listCustomerSupportInboxSessions(input: ListCustomerSupportInboxSessionsInput) {
+  const client = requireServiceSupabaseClient();
+  const organizationId = requireNonEmptyString(input.organizationId, "organizationId");
+  const accountId = optionalString(input.accountId, "accountId");
+
+  if (accountId) {
+    const account = await getChannelAccountRepository(client, organizationId, accountId);
+    if (!account || normalizeStoredChannel(account.channel) !== "customer_support") {
+      throw new NotFoundError("Customer support account not found.");
+    }
+  }
+
+  return listCustomerSupportSessionsRepository(client, organizationId, accountId ?? undefined, input.pagination);
+}
+
+export async function getCustomerSupportInboxSession(organizationId: string, sessionId: string) {
+  const client = requireServiceSupabaseClient();
+  const normalizedOrganizationId = requireNonEmptyString(organizationId, "organizationId");
+  const session = await getCustomerSupportSessionRepository(client, requireNonEmptyString(sessionId, "sessionId"));
+  if (!session || session.organization_id !== normalizedOrganizationId) {
+    throw new NotFoundError("Customer support session not found.");
+  }
+  if (!session.account || normalizeStoredChannel(session.account.channel) !== "customer_support") {
+    throw new NotFoundError("Customer support account not found.");
+  }
+
+  return {
+    session,
+    messages: await listCustomerSupportMessagesRepository(client, session.id),
+  };
+}
+
+export async function sendCustomerSupportInboxReply(input: SendCustomerSupportInboxReplyInput) {
+  const client = requireServiceSupabaseClient();
+  const organizationId = requireNonEmptyString(input.organizationId, "organizationId");
+  const session = await getCustomerSupportSessionRepository(client, requireNonEmptyString(input.sessionId, "sessionId"));
+  if (!session || session.organization_id !== organizationId) {
+    throw new NotFoundError("Customer support session not found.");
+  }
+  if (!session.account || normalizeStoredChannel(session.account.channel) !== "customer_support") {
+    throw new NotFoundError("Customer support account not found.");
+  }
+
+  const reply = await createCustomerSupportMessageRepository(client, {
+    id: crypto.randomUUID(),
+    organization_id: organizationId,
+    session_id: session.id,
+    role: "assistant",
+    message_type: "text",
+    content: requireNonEmptyString(input.text, "text"),
+    metadata: {
+      source: "human_inbox",
+      authorType: "human",
+      agentName: optionalString(input.agentName, "agentName") ?? "Agente humano",
+      ...(requireRecord(input.metadata, "metadata")),
+    },
+  });
+
+  const messages = await listCustomerSupportMessagesRepository(client, session.id);
+  const nextStatus = input.markAsResolved
+    ? "resolved"
+    : session.status === "resolved" || session.status === "closed"
+      ? "active"
+      : session.status;
+  const updatedSession = await updateCustomerSupportSessionRepository(client, session.id, {
+    status: nextStatus,
+    last_message_at: new Date().toISOString(),
+    summary: summarizeCustomerSupportSession(messages),
+  });
+
+  return {
+    session: updatedSession,
+    message: reply,
+    messages,
+  };
+}
+
+export async function updateCustomerSupportInboxSession(input: UpdateCustomerSupportInboxSessionInput) {
+  const client = requireServiceSupabaseClient();
+  const organizationId = requireNonEmptyString(input.organizationId, "organizationId");
+  const session = await getCustomerSupportSessionRepository(client, requireNonEmptyString(input.sessionId, "sessionId"));
+  if (!session || session.organization_id !== organizationId) {
+    throw new NotFoundError("Customer support session not found.");
+  }
+  if (!session.account || normalizeStoredChannel(session.account.channel) !== "customer_support") {
+    throw new NotFoundError("Customer support account not found.");
+  }
+
+  const status = parseCustomerSupportSessionStatus(input.status);
+  const updatedSession = await updateCustomerSupportSessionRepository(client, session.id, {
+    status,
+    summary: input.summary !== undefined ? optionalString(input.summary, "summary") : session.summary,
+    last_message_at: new Date().toISOString(),
+    handoff_requested_at:
+      status === "handoff_requested"
+        ? (session.handoff_requested_at ?? new Date().toISOString())
+        : session.handoff_requested_at,
+  });
+
+  return {
+    session: updatedSession,
+    messages: await listCustomerSupportMessagesRepository(client, session.id),
+  };
 }
 
 export async function getChannelAutomationSnapshot(organizationId: string) {

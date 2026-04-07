@@ -5,7 +5,7 @@
  * Define las entidades de dominio y los inputs de los servicios.
  *
  * Canales soportados (ChannelKind):
- *   customer_support, email, facebook, instagram, x, tiktok, whatsapp, messenger
+ *   customer_support, email, facebook, instagram, linkedin, youtube, telegram, x, tiktok, whatsapp, messenger
  *
  * Entidades de base de datos:
  *   - ChannelAccount: cuenta conectada de una plataforma (ej: @miempresa en Instagram)
@@ -24,12 +24,15 @@
  * Inputs de creación/actualización usados por los servicios.
  */
 
-export type ChannelKind = "customer_support" | "email" | "facebook" | "instagram" | "x" | "tiktok" | "whatsapp" | "messenger";
+export type ChannelKind = "customer_support" | "email" | "facebook" | "instagram" | "linkedin" | "youtube" | "telegram" | "x" | "tiktok" | "whatsapp" | "messenger";
 export type ChannelAccountStatus = "draft" | "connected" | "disconnected" | "error";
 export type ChannelBotStatus = "draft" | "active" | "paused";
 export type ChannelJobStatus = "draft" | "queued" | "scheduled" | "running" | "completed" | "failed" | "canceled" | "requires_auth";
 export type ChannelJobOutcome = "published" | "sent" | "replied" | "lead_captured" | "scheduled" | "manual_review" | "unknown";
 export type ChannelAgentType = "dm_responder" | "comment_responder" | "publisher" | "ads_operator";
+export type CustomerSupportSessionStatus = "active" | "handoff_requested" | "resolved" | "closed";
+export type CustomerSupportMessageRole = "visitor" | "assistant" | "system";
+export type CustomerSupportMessageType = "text" | "article" | "ticket" | "media" | "handoff";
 
 export interface ChannelAccount {
   id: string;
@@ -112,6 +115,38 @@ export interface ChannelJobEvent {
   provider: string;
   event_type: string;
   payload: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface CustomerSupportSession {
+  id: string;
+  organization_id: string;
+  account_id: string;
+  agent_id: string | null;
+  flow_id: string | null;
+  public_widget_key: string;
+  visitor_id: string | null;
+  visitor_name: string | null;
+  visitor_email: string | null;
+  visitor_metadata: Record<string, unknown>;
+  source_url: string | null;
+  origin: string | null;
+  status: CustomerSupportSessionStatus;
+  summary: string | null;
+  handoff_requested_at: string | null;
+  last_message_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CustomerSupportMessage {
+  id: string;
+  organization_id: string;
+  session_id: string;
+  role: CustomerSupportMessageRole;
+  message_type: CustomerSupportMessageType;
+  content: string | null;
+  metadata: Record<string, unknown>;
   created_at: string;
 }
 
@@ -272,4 +307,50 @@ export interface CompleteChannelJobInput {
   jobId: string;
   resultSummary?: string;
   resultPayload?: Record<string, unknown>;
+}
+
+export interface CreateCustomerSupportWidgetSessionInput {
+  publicWidgetKey: string;
+  origin?: string;
+  sourceUrl?: string;
+  visitorId?: string;
+  visitorName?: string;
+  visitorEmail?: string;
+  visitorMetadata?: Record<string, unknown>;
+}
+
+export interface SendCustomerSupportWidgetMessageInput {
+  sessionId: string;
+  text: string;
+  origin?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface RequestCustomerSupportHandoffInput {
+  sessionId: string;
+  origin?: string;
+  reason?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ListCustomerSupportInboxSessionsInput {
+  organizationId: string;
+  accountId?: string;
+  pagination?: { limit: number; offset: number };
+}
+
+export interface SendCustomerSupportInboxReplyInput {
+  organizationId: string;
+  sessionId: string;
+  text: string;
+  agentName?: string;
+  markAsResolved?: boolean;
+  metadata?: Record<string, unknown>;
+}
+
+export interface UpdateCustomerSupportInboxSessionInput {
+  organizationId: string;
+  sessionId: string;
+  status: CustomerSupportSessionStatus;
+  summary?: string;
 }

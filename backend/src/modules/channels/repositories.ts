@@ -20,7 +20,16 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { assertNoError } from "../shared/supabase-client.js";
-import type { ChannelAccount, ChannelAgent, ChannelFlow, ChannelJob, ChannelJobEvent, ChannelKind } from "./types.js";
+import type {
+  ChannelAccount,
+  ChannelAgent,
+  ChannelFlow,
+  ChannelJob,
+  ChannelJobEvent,
+  ChannelKind,
+  CustomerSupportMessage,
+  CustomerSupportSession,
+} from "./types.js";
 
 export async function listChannelAccountsRepository(client: SupabaseClient, organizationId: string, channel?: ChannelKind, pagination?: { limit: number; offset: number }) {
   let query = client.from("channel_accounts").select("*").eq("organization_id", organizationId).order("updated_at", { ascending: false });
@@ -39,6 +48,17 @@ export async function createChannelAccountRepository(client: SupabaseClient, pay
 
 export async function getChannelAccountRepository(client: SupabaseClient, organizationId: string, accountId: string) {
   const { data, error } = await client.from("channel_accounts").select("*").eq("organization_id", organizationId).eq("id", accountId).maybeSingle();
+  assertNoError(error);
+  return (data ?? null) as ChannelAccount | null;
+}
+
+export async function getCustomerSupportAccountByWidgetKeyRepository(client: SupabaseClient, publicWidgetKey: string) {
+  const { data, error } = await client
+    .from("channel_accounts")
+    .select("*")
+    .eq("channel", "customer_support")
+    .contains("metadata", { publicWidgetKey })
+    .maybeSingle();
   assertNoError(error);
   return (data ?? null) as ChannelAccount | null;
 }
@@ -159,4 +179,94 @@ export async function createChannelJobEventRepository(client: SupabaseClient, pa
   const { data, error } = await client.from("channel_job_events").insert(payload).select().single();
   assertNoError(error);
   return data as ChannelJobEvent;
+}
+
+export async function createAppointmentFromChannelToolRepository(
+  client: SupabaseClient,
+  payload: {
+    organization_id: string;
+    contact_id: string | null;
+    title: string;
+    starts_at: string;
+    ends_at: string;
+    status: "scheduled";
+    location: string | null;
+    notes: string | null;
+  }
+) {
+  const { data, error } = await client.from("appointments").insert(payload).select().single();
+  assertNoError(error);
+  return data as {
+    id: string;
+    organization_id: string;
+    contact_id: string | null;
+    title: string;
+    starts_at: string;
+    ends_at: string;
+    status: string;
+    location: string | null;
+    notes: string | null;
+  };
+}
+
+export async function createCustomerSupportSessionRepository(client: SupabaseClient, payload: Partial<CustomerSupportSession>) {
+  const { data, error } = await client.from("customer_support_sessions").insert(payload).select().single();
+  assertNoError(error);
+  return data as CustomerSupportSession;
+}
+
+export async function listCustomerSupportSessionsRepository(client: SupabaseClient, organizationId: string, accountId?: string, pagination?: { limit: number; offset: number }) {
+  const limit = pagination?.limit ?? 100;
+  const offset = pagination?.offset ?? 0;
+  let query = client
+    .from("customer_support_sessions")
+    .select("*, account:channel_accounts(id, name, handle, metadata, channel), agent:channel_agents(id, name), flow:channel_flows(id, name, action_type)")
+    .eq("organization_id", organizationId)
+    .order("last_message_at", { ascending: false })
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1);
+  if (accountId) query = query.eq("account_id", accountId);
+  const { data, error } = await query;
+  assertNoError(error);
+  return (data ?? []) as unknown as Array<CustomerSupportSession & {
+    account?: Pick<ChannelAccount, "id" | "name" | "handle" | "metadata" | "channel"> | null;
+    agent?: Pick<ChannelAgent, "id" | "name"> | null;
+    flow?: Pick<ChannelFlow, "id" | "name"> & { action_type?: string | null } | null;
+  }>;
+}
+
+export async function getCustomerSupportSessionRepository(client: SupabaseClient, sessionId: string) {
+  const { data, error } = await client
+    .from("customer_support_sessions")
+    .select("*, account:channel_accounts(id, name, handle, metadata, channel), agent:channel_agents(id, name), flow:channel_flows(id, name, action_type)")
+    .eq("id", sessionId)
+    .maybeSingle();
+  assertNoError(error);
+  return (data ?? null) as unknown as (CustomerSupportSession & {
+    account?: Pick<ChannelAccount, "id" | "name" | "handle" | "metadata" | "channel"> | null;
+    agent?: Pick<ChannelAgent, "id" | "name"> | null;
+    flow?: Pick<ChannelFlow, "id" | "name"> & { action_type?: string | null } | null;
+  }) | null;
+}
+
+export async function updateCustomerSupportSessionRepository(client: SupabaseClient, sessionId: string, payload: Partial<CustomerSupportSession>) {
+  const { data, error } = await client.from("customer_support_sessions").update(payload).eq("id", sessionId).select().single();
+  assertNoError(error);
+  return data as CustomerSupportSession;
+}
+
+export async function listCustomerSupportMessagesRepository(client: SupabaseClient, sessionId: string) {
+  const { data, error } = await client
+    .from("customer_support_messages")
+    .select("*")
+    .eq("session_id", sessionId)
+    .order("created_at", { ascending: true });
+  assertNoError(error);
+  return (data ?? []) as CustomerSupportMessage[];
+}
+
+export async function createCustomerSupportMessageRepository(client: SupabaseClient, payload: Partial<CustomerSupportMessage>) {
+  const { data, error } = await client.from("customer_support_messages").insert(payload).select().single();
+  assertNoError(error);
+  return data as CustomerSupportMessage;
 }

@@ -76,6 +76,11 @@
       }
 
       .toolbar { display: flex; gap: 10px; flex-wrap: wrap; }
+      .editor-tabs {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
       .button, .ghost-button, .soft-button {
         min-height: 44px; padding: 0 16px; border-radius: 16px; border: 1px solid transparent; cursor: pointer;
       }
@@ -94,7 +99,7 @@
       .channel-strip {
         display: grid;
         gap: 16px;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         margin-top: 16px;
       }
 
@@ -122,6 +127,7 @@
         border-radius: 999px; font-size: 12px; font-weight: 700;
       }
       .channel-badge { width: 42px; height: 42px; padding: 0; border-radius: 14px; font-weight: 800; }
+      .channel-badge img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; display: block; }
       .count-badge, .badge.info { background: var(--blue-soft); color: var(--blue); }
       .badge.ok { background: var(--green-soft); color: var(--green); }
       .badge.warn { background: var(--amber-soft); color: var(--amber); }
@@ -130,6 +136,9 @@
       .tone-email { background: #dbeafe; color: #1d4ed8; }
       .tone-facebook { background: #dbeafe; color: #1d4ed8; }
       .tone-instagram { background: #fae8ff; color: #a21caf; }
+      .tone-linkedin { background: #dbeafe; color: #0a66c2; }
+      .tone-youtube { background: #fee2e2; color: #dc2626; }
+      .tone-telegram { background: #e0f2fe; color: #0284c7; }
       .tone-x { background: #e2e8f0; color: #0f172a; }
       .tone-tiktok { background: #fee2e2; color: #be123c; }
       .tone-whatsapp { background: #dcfce7; color: #15803d; }
@@ -556,7 +565,8 @@
         line-height: 1.5;
       }
 
-      .editor-workspace { display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 18px; }
+      .editor-workspace { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+      .connection-grid { display: grid; grid-template-columns: minmax(320px, 0.85fr) minmax(360px, 1.15fr); gap: 18px; align-items: start; }
       .accounts-list, .detail-stack, .list-grid { display: grid; gap: 12px; }
       .field { margin-top: 12px; }
       label { display: block; margin-bottom: 8px; color: var(--muted); font-size: 13px; }
@@ -568,15 +578,143 @@
       .section-actions { margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; }
       .list-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .empty-state { padding: 28px; text-align: center; }
+      .support-inbox-layout { display: grid; gap: 14px; grid-template-columns: 340px minmax(0, 1fr); }
+      .support-session-list, .support-thread-layout, .support-thread-body { display: grid; gap: 12px; }
+      .support-session-item {
+        width: 100%;
+        text-align: left;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 14px;
+        cursor: pointer;
+        display: grid;
+        gap: 10px;
+      }
+      .support-session-item.active {
+        border-color: #93c5fd;
+        background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
+        box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.12);
+      }
+      .support-session-preview {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+      .support-session-time {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .support-filter-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .support-filter-button.active {
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        border-color: transparent;
+        color: #fff;
+      }
+      .support-thread-panel {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        padding: 18px;
+        display: grid;
+        gap: 14px;
+      }
+      .support-thread-stack {
+        display: grid;
+        gap: 12px;
+        max-height: 520px;
+        overflow: auto;
+        padding-right: 4px;
+      }
+      .thread-bubble.visitor {
+        background: #eff6ff;
+        color: #1d4ed8;
+      }
+      .thread-bubble.assistant-bot {
+        background: #f8fafc;
+        color: var(--text);
+      }
+      .thread-bubble.assistant-human {
+        background: #dcfce7;
+        color: #166534;
+        justify-self: end;
+      }
+      .thread-bubble.system-log {
+        background: #fef3c7;
+        color: #92400e;
+        justify-self: end;
+      }
+      .support-composer {
+        border-top: 1px solid var(--line);
+        padding-top: 14px;
+        display: grid;
+        gap: 12px;
+      }
+      .support-inline-meta {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .support-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--muted-strong);
+        font-size: 13px;
+      }
+      .support-checkbox input {
+        width: 16px;
+        min-height: 16px;
+        margin: 0;
+      }
+      .tool-checkbox-grid {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        margin-top: 8px;
+      }
+      .support-thread-empty {
+        padding: 32px 20px;
+        text-align: center;
+        color: var(--muted);
+        border: 1px dashed var(--line);
+        border-radius: 18px;
+      }
+      .oauth-connect-card {
+        margin-top: 14px;
+        border: 1px solid #bfdbfe;
+        border-radius: 18px;
+        padding: 14px;
+        background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
+        display: grid;
+        gap: 10px;
+      }
+      .oauth-connect-card.unsupported {
+        border-color: var(--line);
+        background: var(--panel-soft);
+      }
+      .oauth-provider-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
 
       @media (max-width: 1180px) {
-        .channel-strip, .summary-grid, .chart-grid, .editor-workspace, .donut-grid, .ring-grid, .pipeline-board, .split-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .channel-strip, .summary-grid, .chart-grid, .editor-workspace, .connection-grid, .donut-grid, .ring-grid, .pipeline-board, .split-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .support-inbox-layout { grid-template-columns: 1fr; }
         .showcase-grid, .chat-layout { grid-template-columns: 1fr; }
       }
       @media (max-width: 860px) {
         .shell { width: min(100vw - 16px, 1440px); }
-        .topbar, .toolbar, .section-row, .item-row, .section-actions, .list-grid.three, .hero-actions, .insight-head { flex-direction: column; align-items: stretch; }
-        .channel-strip, .summary-grid, .chart-grid, .donut-grid, .ring-grid, .pipeline-board, .split-grid, .asset-gallery { grid-template-columns: 1fr; }
+        .topbar, .toolbar, .editor-tabs, .section-row, .item-row, .section-actions, .list-grid.three, .hero-actions, .insight-head, .support-inline-meta, .support-filter-row { flex-direction: column; align-items: stretch; }
+        .channel-strip, .summary-grid, .chart-grid, .connection-grid, .donut-grid, .ring-grid, .pipeline-board, .split-grid, .asset-gallery { grid-template-columns: 1fr; }
         .donut-layout { grid-template-columns: 1fr; justify-items: center; text-align: center; }
         .thread-bubble { max-width: 100%; }
       }
@@ -591,6 +729,10 @@
           <div id="statusLine" class="status-line">Cargando datos del backend...</div>
         </div>
         <div class="toolbar">
+          <div class="editor-tabs">
+            <button id="connectionTabButton" class="soft-button support-filter-button active" type="button">Conexión</button>
+            <button id="agentsTabButton" class="soft-button support-filter-button" type="button">Crear agentes</button>
+          </div>
           <button id="refreshButton" class="ghost-button" type="button">Recargar</button>
         </div>
       </section>
@@ -613,15 +755,18 @@
             <div class="section-row">
               <div>
                 <div class="item-title">Editor del canal</div>
-                <div class="item-sub">Gestiona cuentas y workspace del canal seleccionado.</div>
+                <div class="item-sub">Gestiona cuentas por canal y crea agentes multicanal desde un solo lugar.</div>
               </div>
               <div class="section-actions">
                 <button id="backButton" class="ghost-button" type="button">Volver</button>
               </div>
             </div>
           </div>
-          <div class="editor-workspace">
-            <aside>
+          <div id="agentWorkspace" class="hidden">
+            <div id="globalAgentPanel" style="margin-bottom: 16px;"></div>
+          </div>
+          <div id="connectionWorkspace" class="editor-workspace">
+            <div class="connection-grid">
               <div class="section-card">
                 <div class="section-row">
                   <div>
@@ -647,19 +792,20 @@
                     <label for="accountHandle">Identificador</label>
                     <input id="accountHandle" name="handle" placeholder="@marca o correo@dominio.com" />
                   </div>
+                  <div id="oauthConnectPanel"></div>
                   <div class="section-actions">
                     <button class="button" type="submit">Agregar cuenta</button>
                   </div>
                 </form>
 
                 <div id="accountsList" class="accounts-list" style="margin-top: 16px;"></div>
-                <div id="accountActionsPanel" style="margin-top: 16px;"></div>
               </div>
-            </aside>
 
-            <section>
-              <div id="detailRoot" class="detail-stack"></div>
-            </section>
+              <div>
+                <div id="accountActionsPanel" style="margin-bottom: 16px;"></div>
+                <div id="detailRoot" class="detail-stack"></div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -669,15 +815,19 @@
       const STORAGE_KEY = "automation.channelAccounts.v6";
       const PLATFORMS = [
         { id: "customer_support", label: "Servicio al cliente", short: "CS", tone: "tone-customer-support", description: "Asistente web para soporte, ventas y atención al cliente desde una página." },
-        { id: "email", label: "Email", short: "EM", tone: "tone-email", description: "Bandejas, remitentes y secuencias de correo." },
-        { id: "facebook", label: "Facebook", short: "FB", tone: "tone-facebook", description: "Paginas y activos de Facebook conectados." },
-        { id: "instagram", label: "Instagram", short: "IG", tone: "tone-instagram", description: "Perfiles, fotos, historias y reels." },
+        { id: "email", label: "Email", short: "EM", tone: "tone-email", icon: "/assets/channel-email.webp", description: "Bandejas, remitentes y secuencias de correo." },
+        { id: "facebook", label: "Facebook", short: "FB", tone: "tone-facebook", icon: "/assets/channel-facebook.jpg", description: "Paginas y activos de Facebook conectados." },
+        { id: "instagram", label: "Instagram", short: "IG", tone: "tone-instagram", icon: "/assets/channel-instagram.jpg", description: "Perfiles, fotos, historias y reels." },
+        { id: "linkedin", label: "LinkedIn", short: "LI", tone: "tone-linkedin", icon: "/assets/channel-linkedin.jpg", description: "Paginas de empresa, posts B2B, comentarios y leads." },
+        { id: "youtube", label: "YouTube", short: "YT", tone: "tone-youtube", icon: "/assets/channel-youtube.png", description: "Canales, videos, comentarios y live chat." },
+        { id: "telegram", label: "Telegram", short: "TG", tone: "tone-telegram", icon: "/assets/channel-telegram.png", description: "Bots, grupos, mensajes, media y broadcasts." },
         { id: "x", label: "X", short: "X", tone: "tone-x", description: "Perfiles y flujos para publicaciones y mensajes." },
-        { id: "tiktok", label: "TikTok", short: "TT", tone: "tone-tiktok", description: "Cuentas para videos, respuestas y captacion." },
-        { id: "whatsapp", label: "WhatsApp", short: "WA", tone: "tone-whatsapp", description: "Numeros y bandejas de WhatsApp Business." },
+        { id: "tiktok", label: "TikTok", short: "TT", tone: "tone-tiktok", icon: "/assets/channel-tiktok.webp", description: "Cuentas para videos, respuestas y captacion." },
+        { id: "whatsapp", label: "WhatsApp", short: "WA", tone: "tone-whatsapp", icon: "/assets/channel-whatsapp.webp", description: "Numeros y bandejas de WhatsApp Business." },
         { id: "messenger", label: "Messenger", short: "MS", tone: "tone-messenger", description: "Canales de Messenger conectados." },
-        { id: "phone", label: "Telefono", short: "PH", tone: "tone-phone", description: "Lineas telefonicas y bots de voz del backend actual." }
+        { id: "phone", label: "Telefono", short: "PH", tone: "tone-phone", icon: "/assets/channel-phone.jpg", description: "Lineas telefonicas y bots de voz del backend actual." }
       ];
+      const META_LOGIN_CHANNELS = new Set(["facebook", "instagram", "messenger", "whatsapp"]);
 
       function makeId(prefix) {
         if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
@@ -702,6 +852,9 @@
         seedAccount("email", "Ventas", "ventas@agencyhub.mx"),
         seedAccount("facebook", "Agency Hub Page", "facebook.com/agencyhub"),
         seedAccount("instagram", "Agency Hub", "@agencyhub"),
+        seedAccount("linkedin", "Agency Hub LinkedIn", "linkedin.com/company/agencyhub"),
+        seedAccount("youtube", "Agency Hub Channel", "youtube.com/@agencyhub"),
+        seedAccount("telegram", "Agency Hub Bot", "@agencyhub_bot"),
         seedAccount("x", "Agency Hub Updates", "@agencyhub"),
         seedAccount("tiktok", "Agency Hub Studio", "@agencyhub"),
         seedAccount("whatsapp", "WhatsApp MX", "+5215512345678"),
@@ -730,9 +883,17 @@
       const state = {
         snapshot: null,
         channelSnapshot: null,
+        customerSupportInboxSessions: [],
+        customerSupportInboxSessionDetails: {},
+        customerSupportInboxLoading: {},
+        customerSupportInboxFilterByAccount: {},
+        selectedCustomerSupportSessionIdByAccount: {},
+        globalAgentType: "",
+        globalAgentTab: "general",
         accounts: loadAccounts(),
         selectedPlatformId: "customer_support",
         selectedAccountId: null,
+        editorTab: "connections",
         isEditing: false
       };
 
@@ -747,10 +908,15 @@
       const accountsList = document.getElementById("accountsList");
       const accountActionsPanel = document.getElementById("accountActionsPanel");
       const detailRoot = document.getElementById("detailRoot");
+      const connectionWorkspace = document.getElementById("connectionWorkspace");
+      const agentWorkspace = document.getElementById("agentWorkspace");
+      const globalAgentPanel = document.getElementById("globalAgentPanel");
       const selectedPlatformBadge = document.getElementById("selectedPlatformBadge");
       const addAccountForm = document.getElementById("addAccountForm");
       const refreshButton = document.getElementById("refreshButton");
       const backButton = document.getElementById("backButton");
+      const connectionTabButton = document.getElementById("connectionTabButton");
+      const agentsTabButton = document.getElementById("agentsTabButton");
 
       function persistAccounts() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state.accounts));
@@ -766,6 +932,52 @@
 
       function getSelectedAccount() {
         return state.accounts.find((item) => item.id === state.selectedAccountId) || null;
+      }
+
+      function sortCustomerSupportSessions(sessions) {
+        return [...sessions].sort((left, right) => {
+          const leftValue = new Date(left?.last_message_at || left?.created_at || 0).getTime();
+          const rightValue = new Date(right?.last_message_at || right?.created_at || 0).getTime();
+          return rightValue - leftValue;
+        });
+      }
+
+      function upsertCustomerSupportInboxSession(session) {
+        state.customerSupportInboxSessions = sortCustomerSupportSessions([
+          ...(state.customerSupportInboxSessions || []).filter((item) => item.id !== session.id),
+          session
+        ]);
+      }
+
+      function getCustomerSupportInboxSessions(accountId) {
+        return sortCustomerSupportSessions((state.customerSupportInboxSessions || []).filter((item) => item.account_id === accountId));
+      }
+
+      function getCustomerSupportInboxFilter(accountId) {
+        return state.customerSupportInboxFilterByAccount[accountId] || "all";
+      }
+
+      function getFilteredCustomerSupportInboxSessions(accountId) {
+        const sessions = getCustomerSupportInboxSessions(accountId);
+        const filter = getCustomerSupportInboxFilter(accountId);
+        if (filter === "handoff") return sessions.filter((item) => item.status === "handoff_requested");
+        if (filter === "open") return sessions.filter((item) => item.status === "active" || item.status === "handoff_requested");
+        if (filter === "resolved") return sessions.filter((item) => item.status === "resolved" || item.status === "closed");
+        return sessions;
+      }
+
+      function ensureCustomerSupportInboxSelection(accountId) {
+        const sessions = getFilteredCustomerSupportInboxSessions(accountId);
+        const selectedId = state.selectedCustomerSupportSessionIdByAccount[accountId];
+        if (selectedId && sessions.some((item) => item.id === selectedId)) return selectedId;
+        const fallbackId = sessions[0]?.id || null;
+        state.selectedCustomerSupportSessionIdByAccount[accountId] = fallbackId;
+        return fallbackId;
+      }
+
+      function getSelectedCustomerSupportInboxSession(accountId) {
+        const selectedId = ensureCustomerSupportInboxSelection(accountId);
+        return getCustomerSupportInboxSessions(accountId).find((item) => item.id === selectedId) || null;
       }
 
       function getGenericSnapshot() {
@@ -804,8 +1016,62 @@
         return getChannelAgentTypes(platformId).find((item) => item.agent_type === agentType) || null;
       }
 
+      function getAllAgentTypeDefinitions() {
+        const definitions = new Map();
+        Object.values(getGenericSnapshot().channels ?? {}).forEach((channel) => {
+          (channel?.agentTypes ?? []).forEach((definition) => {
+            if (!definitions.has(definition.agent_type)) definitions.set(definition.agent_type, definition);
+          });
+        });
+        return [...definitions.values()];
+      }
+
+      function getGlobalAgentTypeDefinition(agentType) {
+        return getAllAgentTypeDefinitions().find((item) => item.agent_type === agentType) || null;
+      }
+
+      function getAgentTargetAccounts(agentType) {
+        const accounts = getGenericSnapshot().accounts ?? [];
+        return accounts.filter((account) => {
+          if (agentType === "publisher") {
+            return getChannelActions(account.channel).some((action) => action.action_type.startsWith("publish") || action.action_type === "upload_video");
+          }
+          return getChannelAgentTypes(account.channel).some((definition) => definition.agent_type === agentType);
+        });
+      }
+
       function getAgentTypeLabel(platformId, agentType) {
         return getAgentTypeDefinition(platformId, agentType)?.label || "Tipo no definido";
+      }
+
+      function renderOAuthConnectPanel(platform) {
+        if (META_LOGIN_CHANNELS.has(platform.id)) {
+          return `
+            <div class="oauth-connect-card">
+              <div class="oauth-provider-row">
+                <div>
+                  <div class="item-title">Login real de ${escapeHtml(platform.label)}</div>
+                  <div class="item-sub">Abre Meta OAuth para autorizar esta cuenta y crearla conectada en el backend.</div>
+                </div>
+                <button class="button" id="oauthConnectButton" type="button">Continuar con Meta</button>
+              </div>
+              <div class="helper-text">Necesitas configurar App ID, App Secret y redirect URI autorizado en Meta Developers.</div>
+            </div>
+          `;
+        }
+        if (platform.id === "customer_support" || platform.id === "phone") {
+          return "";
+        }
+        return `
+          <div class="oauth-connect-card unsupported">
+            <div class="item-title">Login pendiente para ${escapeHtml(platform.label)}</div>
+            <div class="item-sub">Este canal requiere un OAuth distinto. Por ahora puedes agregarlo manualmente y conectar su provider despues.</div>
+          </div>
+        `;
+      }
+
+      function startOAuthConnect(platformId) {
+        window.location.href = `/api/channels/oauth/meta/start?channel=${encodeURIComponent(platformId)}`;
       }
 
       function syncAccountsFromChannels() {
@@ -862,14 +1128,33 @@
         renderApp();
       }
 
+      function renderEditorTabs() {
+        const isAgentTab = state.editorTab === "agents";
+        connectionWorkspace.classList.toggle("hidden", isAgentTab);
+        agentWorkspace.classList.toggle("hidden", !isAgentTab);
+        connectionTabButton.classList.toggle("active", !isAgentTab);
+        agentsTabButton.classList.toggle("active", isAgentTab);
+      }
+
+      function setEditorTab(tab) {
+        state.editorTab = tab;
+        state.isEditing = true;
+        renderApp();
+      }
+
       function renderApp() {
         ensureSelection();
         renderPlatforms();
         summaryView.classList.toggle("hidden", state.isEditing);
         editorView.classList.toggle("hidden", !state.isEditing);
+        renderEditorTabs();
         if (state.isEditing) {
-          renderAccounts();
-          renderDetail();
+          if (state.editorTab === "agents") {
+            renderGlobalAgentPanel();
+          } else {
+            renderAccounts();
+            renderDetail();
+          }
           return;
         }
         renderSummary();
@@ -882,7 +1167,7 @@
           return `
             <button class="platform-button ${platform.id === state.selectedPlatformId ? "active" : ""}" data-platform-id="${platform.id}" type="button">
               <div class="platform-row">
-                <div class="channel-badge ${platform.tone}">${platform.short}</div>
+                <div class="channel-badge ${platform.tone}">${platform.icon ? `<img src="${escapeHtml(platform.icon)}" alt="${escapeHtml(platform.label)}" />` : platform.short}</div>
                 <div>
                   <div class="platform-label">${escapeHtml(platform.label)}</div>
                   <div class="platform-sub">${escapeHtml(platform.description)}</div>
@@ -1204,6 +1489,40 @@
 
       function formatMetricValue(value, suffix = "") {
         return `${escapeHtml(String(value))}${suffix}`;
+      }
+
+      function formatDateTime(value) {
+        if (!value) return "Sin fecha";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return "Sin fecha";
+        return new Intl.DateTimeFormat("es-MX", {
+          dateStyle: "short",
+          timeStyle: "short"
+        }).format(date);
+      }
+
+      function getCustomerSupportSessionVisitorLabel(session) {
+        return session?.visitor_name || session?.visitor_email || session?.visitor_id || "Visitante anonimo";
+      }
+
+      function getCustomerSupportSessionContext(session) {
+        return session?.summary || session?.visitor_email || session?.source_url || "Sin contexto resumido todavia.";
+      }
+
+      function isHumanInboxMessage(message) {
+        return message?.role === "assistant" && message?.metadata?.source === "human_inbox";
+      }
+
+      function getCustomerSupportMessageBubbleClass(message) {
+        if (message?.role === "visitor") return "visitor";
+        if (message?.role === "system") return "system-log";
+        return isHumanInboxMessage(message) ? "assistant-human" : "assistant-bot";
+      }
+
+      function getCustomerSupportMessageAuthor(message) {
+        if (message?.role === "visitor") return "Visitante";
+        if (message?.role === "system") return "Sistema";
+        return message?.metadata?.agentName || (isHumanInboxMessage(message) ? "Agente humano" : "Asistente web");
       }
 
       function renderMetricCardGrid(items) {
@@ -1629,31 +1948,51 @@
         const ticketJobs = jobs.filter((item) => getJobActionType(item) === "capture_ticket");
         const mediaJobs = jobs.filter((item) => getJobActionType(item) === "send_media");
         const handoffJobs = jobs.filter((item) => getJobActionType(item) === "handoff_agent");
+        const responsePills = [
+          { label: "Primer reply", value: averageJobMetric(chatJobs, "firstResponseSeconds"), suffix: "s", subtitle: "Tiempo promedio en contestar el widget del sitio." },
+          { label: "Satisfacción", value: averageJobMetric(chatJobs, "satisfactionScore"), suffix: "%", subtitle: "Señal sintetica de satisfacción después del chat." },
+          { label: "Deflection", value: averageJobMetric(articleJobs, "deflectionRate"), suffix: "%", subtitle: "Casos resueltos con ayuda sugerida sin abrir ticket." },
+          { label: "Espera handoff", value: averageJobMetric(handoffJobs, "waitMinutes"), suffix: "m", subtitle: "Minutos promedio antes de escalar a humano." }
+        ];
         return `
           <div class="channel-experience">
-            <div class="split-grid">
-              ${renderSectionAsDonut(section, "Mix entre respuesta, conocimiento y escalado")}
+            <div class="chat-layout">
               <div class="spotlight-card">
-                <div class="chart-title">Asistente de soporte web</div>
-                <div class="spotlight-subtitle">Este canal vive como un asistente dentro de una página: responde chats, sugiere ayuda, crea tickets y escala a humano cuando hace falta.</div>
+                <div class="chart-title">Bandeja del sitio</div>
+                <div class="spotlight-subtitle">Servicio al cliente tiene que sentirse como un help desk web: conversaciones vivas, ayuda contextual y escalado humano cuando el bot ya no debe seguir.</div>
+                ${renderConversationPreview([...chatJobs, ...mediaJobs], {
+                  emptyMessage: "Todavia no hay conversaciones recientes del widget web.",
+                  channelLabel: "Widget web",
+                  limit: 4,
+                  userText: "Visitante del sitio",
+                  systemText: "Respuesta del asistente de soporte."
+                })}
+              </div>
+              ${renderSectionAsDonut(section, "Mix entre respuesta, ayuda y escalado")}
+            </div>
+            ${renderMetricPillGrid(responsePills)}
+            <div class="split-grid">
+              ${renderTimelineStack(
+                [...articleJobs, ...ticketJobs, ...handoffJobs].slice(0, 5).map((job) => ({
+                  label: getJobActionType(job) || "support",
+                  title: job.title || "Evento de soporte",
+                  subtitle: job.result_summary || "Acción ejecutada por el asistente del sitio.",
+                  kpis: [`estado ${job.status || "queued"}`, `resultado ${job.outcome || "n/a"}`]
+                })),
+                "Todavia no hay ayuda sugerida, tickets o handoffs recientes."
+              )}
+              <div class="spotlight-card">
+                <div class="chart-title">Cobertura del asistente</div>
+                <div class="spotlight-subtitle">Aquí importa cuánto resuelve el asistente sin perder continuidad entre chat, conocimiento y escalado.</div>
                 ${renderMetricPillGrid([
-                  { label: "Chats answered", value: chatJobs.length, subtitle: "Conversaciones respondidas desde el widget web." },
-                  { label: "Articles", value: articleJobs.length, subtitle: "Artículos o FAQs compartidos como ayuda contextual." },
-                  { label: "Tickets", value: ticketJobs.length, subtitle: "Casos creados para seguimiento humano." },
-                  { label: "Media", value: mediaJobs.length, subtitle: "Imágenes o videos enviados dentro del chat." },
-                  { label: "Handoffs", value: handoffJobs.length, subtitle: "Escalados a soporte o ventas humanas." }
+                  { label: "Chats", value: getSectionItemValue(section, "chats_answered") || chatJobs.length, subtitle: "Conversaciones atendidas dentro de la web." },
+                  { label: "Artículos", value: getSectionItemValue(section, "articles_suggested") || articleJobs.length, subtitle: "Ayuda sugerida antes de abrir ticket." },
+                  { label: "Tickets", value: getSectionItemValue(section, "tickets_created") || ticketJobs.length, subtitle: "Casos capturados para seguimiento." },
+                  { label: "Media", value: getSectionItemValue(section, "media_sent") || mediaJobs.length, subtitle: "Recursos visuales compartidos por chat." },
+                  { label: "Handoffs", value: getSectionItemValue(section, "handoffs") || handoffJobs.length, subtitle: "Escalados a soporte o ventas." }
                 ])}
               </div>
             </div>
-            ${renderTimelineStack(
-              jobs.slice(0, 4).map((job) => ({
-                label: getJobActionType(job) || "chat",
-                title: job.title || "Interacción de soporte",
-                subtitle: job.result_summary || "Evento del asistente web ejecutado en modo preview.",
-                kpis: [`estado ${job.status || "queued"}`, `resultado ${job.outcome || "n/a"}`]
-              })),
-              "Todavia no hay actividad reciente del asistente web."
-            )}
           </div>
         `;
       }
@@ -1964,6 +2303,106 @@
         `;
       }
 
+      function renderLinkedInSummarySection(platform) {
+        const jobs = getChannelJobsForPlatform(platform.id);
+        const section = getChannelSummarySection(platform.id, "linkedin_growth");
+        const postJobs = jobs.filter((item) => getJobActionType(item) === "publish_post");
+        const commentJobs = jobs.filter((item) => getJobActionType(item) === "reply_comment");
+        const messageJobs = jobs.filter((item) => getJobActionType(item) === "send_message");
+        const leadJobs = jobs.filter((item) => getJobActionType(item) === "capture_lead");
+        return `
+          <div class="channel-experience">
+            <div class="showcase-grid">
+              <div class="spotlight-card">
+                <div class="chart-title">LinkedIn B2B cockpit</div>
+                <div class="spotlight-subtitle">Canal para autoridad, comentarios comerciales, mensajes de seguimiento y leads de empresa.</div>
+                ${renderTimelineStack([...postJobs, ...commentJobs, ...messageJobs].slice(0, 5).map((job) => ({
+                  label: getJobActionType(job) || "linkedin",
+                  title: job.title || "Actividad LinkedIn",
+                  subtitle: job.result_summary || "Movimiento ejecutado en modo preview.",
+                  kpis: [`estado ${job.status || "queued"}`, `resultado ${job.outcome || "n/a"}`]
+                })), "Todavia no hay actividad reciente en LinkedIn.")}
+              </div>
+              ${renderSectionAsDonut(section, "Mix entre posts, comentarios, mensajes, leads y ads")}
+            </div>
+            ${renderMetricPillGrid([
+              { label: "Posts", value: getSectionItemValue(section, "posts_published") || postJobs.length, subtitle: "Contenido B2B publicado o preparado." },
+              { label: "Comentarios", value: getSectionItemValue(section, "comments_replied") || commentJobs.length, subtitle: "Conversaciones publicas respondidas." },
+              { label: "Mensajes", value: getSectionItemValue(section, "messages_sent") || messageJobs.length, subtitle: "Follow-up privado preparado." },
+              { label: "Leads", value: getSectionItemValue(section, "leads_captured") || leadJobs.length, subtitle: "Contactos capturados desde interaccion." }
+            ])}
+          </div>
+        `;
+      }
+
+      function renderYouTubeSummarySection(platform) {
+        const jobs = getChannelJobsForPlatform(platform.id);
+        const section = getChannelSummarySection(platform.id, "youtube_video_ops");
+        const uploadJobs = jobs.filter((item) => getJobActionType(item) === "upload_video");
+        const commentJobs = jobs.filter((item) => getJobActionType(item) === "reply_comment");
+        const liveChatJobs = jobs.filter((item) => getJobActionType(item) === "reply_live_chat");
+        return `
+          <div class="channel-experience">
+            <div class="pipeline-board">
+              <div class="pipeline-column">
+                <div class="pipeline-kicker">uploads</div>
+                <div class="pipeline-value">${getSectionItemValue(section, "videos_uploaded") || uploadJobs.length}</div>
+                <div class="pipeline-helper">Videos subidos o listos para publicar.</div>
+              </div>
+              <div class="pipeline-column">
+                <div class="pipeline-kicker">comentarios</div>
+                <div class="pipeline-value">${getSectionItemValue(section, "comments_replied") || commentJobs.length}</div>
+                <div class="pipeline-helper">Comentarios respondidos en videos.</div>
+              </div>
+              <div class="pipeline-column">
+                <div class="pipeline-kicker">live chat</div>
+                <div class="pipeline-value">${getSectionItemValue(section, "live_chat_replies") || liveChatJobs.length}</div>
+                <div class="pipeline-helper">Mensajes atendidos durante directos.</div>
+              </div>
+            </div>
+            <div class="section-card">
+              <div class="chart-title">Actividad YouTube</div>
+              ${renderTimelineStack([...uploadJobs, ...commentJobs, ...liveChatJobs].slice(0, 6).map((job) => ({
+                label: getJobActionType(job) || "youtube",
+                title: job.title || "Actividad YouTube",
+                subtitle: job.result_summary || "Movimiento ejecutado en modo preview.",
+                kpis: [`estado ${job.status || "queued"}`, `resultado ${job.outcome || "n/a"}`]
+              })), "Todavia no hay actividad reciente en YouTube.")}
+            </div>
+          </div>
+        `;
+      }
+
+      function renderTelegramSummarySection(platform) {
+        const jobs = getChannelJobsForPlatform(platform.id);
+        const section = getChannelSummarySection(platform.id, "telegram_bot_ops");
+        const messageJobs = jobs.filter((item) => getJobActionType(item) === "send_message" || getJobActionType(item) === "reply_message");
+        const mediaJobs = jobs.filter((item) => getJobActionType(item) === "send_media");
+        const broadcastJobs = jobs.filter((item) => getJobActionType(item) === "send_broadcast");
+        const handoffJobs = jobs.filter((item) => getJobActionType(item) === "handoff_agent");
+        return `
+          <div class="channel-experience">
+            <div class="chat-layout">
+              <div class="spotlight-card">
+                <div class="chart-title">Telegram bot inbox</div>
+                <div class="spotlight-subtitle">Telegram funciona como canal directo: mensajes, media, broadcasts y escalado humano.</div>
+                ${renderConversationPreview([...messageJobs, ...mediaJobs, ...broadcastJobs], {
+                  emptyMessage: "Todavia no hay conversaciones recientes en Telegram.",
+                  channelLabel: "Telegram"
+                })}
+              </div>
+              ${renderSectionAsDonut(section, "Mix entre mensajes, media, broadcasts y handoff")}
+            </div>
+            ${renderMetricPillGrid([
+              { label: "Mensajes", value: getSectionItemValue(section, "messages_sent") + getSectionItemValue(section, "messages_replied") || messageJobs.length, subtitle: "Mensajes enviados o respondidos por bot." },
+              { label: "Media", value: getSectionItemValue(section, "media_sent") || mediaJobs.length, subtitle: "Imagenes o videos enviados." },
+              { label: "Broadcasts", value: getSectionItemValue(section, "broadcasts_sent") || broadcastJobs.length, subtitle: "Mensajes enviados a grupos o chats permitidos." },
+              { label: "Handoffs", value: getSectionItemValue(section, "handoffs") || handoffJobs.length, subtitle: "Conversaciones escaladas a humano." }
+            ])}
+          </div>
+        `;
+      }
+
       function renderChannelSpecificSummary(platform) {
         switch (platform.id) {
           case "customer_support":
@@ -1972,6 +2411,12 @@
             return renderFacebookSummarySection(platform);
           case "instagram":
             return renderInstagramSummarySection(platform);
+          case "linkedin":
+            return renderLinkedInSummarySection(platform);
+          case "youtube":
+            return renderYouTubeSummarySection(platform);
+          case "telegram":
+            return renderTelegramSummarySection(platform);
           case "x":
             return renderXSummarySection(platform);
           case "tiktok":
@@ -2008,9 +2453,94 @@
         `;
       }
 
+      function renderGlobalAgentConfigFields(agentType) {
+        const definition = getGlobalAgentTypeDefinition(agentType);
+        if (!definition) {
+          return `<div class="empty-state"><div class="empty">Selecciona un tipo de agente para cargar su configuración.</div></div>`;
+        }
+
+        return `
+          <div class="section-note">${escapeHtml(definition.description)}</div>
+          ${definition.config_fields.map((field) => `
+            <div class="field">
+              <label for="globalAgentConfig_${escapeHtml(field.key)}">${escapeHtml(field.label)}</label>
+              <select id="globalAgentConfig_${escapeHtml(field.key)}" name="agentConfig_${escapeHtml(field.key)}">
+                ${field.options.map((option, index) => `<option value="${escapeHtml(option.value)}" ${index === 0 ? "selected" : ""}>${escapeHtml(option.label)}</option>`).join("")}
+              </select>
+            </div>
+          `).join("")}
+        `;
+      }
+
+      function renderGlobalAgentAccountCheckboxes(agentType) {
+        const accounts = getAgentTargetAccounts(agentType);
+        if (!accounts.length) return `<div class="empty-state"><div class="empty">No hay cuentas compatibles para este tipo de agente.</div></div>`;
+        return `
+          <div class="tool-checkbox-grid">
+            ${accounts.map((account, index) => {
+              const platform = PLATFORMS.find((item) => item.id === account.channel);
+              return `
+                <label class="support-checkbox">
+                  <input name="targetAccountIds" type="checkbox" value="${escapeHtml(account.id)}" ${index === 0 ? "checked" : ""} />
+                  <span>${escapeHtml(platform?.label || account.channel)} · ${escapeHtml(account.name)} ${account.handle ? `(${escapeHtml(account.handle)})` : ""}</span>
+                </label>
+              `;
+            }).join("")}
+          </div>
+        `;
+      }
+
+      const AUDIO_AGENT_TOOLS = [
+        { value: "schedule_appointment", label: "Agendar cita" },
+        { value: "transcribe_audio", label: "Transcribir audio" },
+        { value: "detect_audio_intent", label: "Detectar intencion en audio" },
+        { value: "summarize_voice_note", label: "Resumir nota de voz" },
+        { value: "extract_audio_contact_data", label: "Extraer datos de contacto" },
+        { value: "handoff_audio_case", label: "Escalar audio a humano" },
+        { value: "reply_with_voice", label: "Responder con audio" }
+      ];
+
+      const MEDIA_MODE_OPTIONS = [
+        ["text_only", "Solo texto"],
+        ["text_and_images", "Texto e imagenes"],
+        ["text_images_video", "Texto, imagenes y video"],
+        ["text_audio", "Texto y grabaciones de audio"],
+        ["text_images_audio", "Texto, imagenes y grabaciones"],
+        ["text_images_video_audio", "Texto, imagenes, video y grabaciones"],
+        ["all_media", "Texto, imagenes, video, archivos y grabaciones"]
+      ];
+
+      function renderAudioToolCheckboxes() {
+        return `
+          <div class="helper-text">Marca solo las herramientas que este agente puede usar. Agendar cita crea una cita interna de prueba.</div>
+          <div class="tool-checkbox-grid">
+            ${AUDIO_AGENT_TOOLS.map((tool) => `
+              <label class="support-checkbox">
+                <input name="tools" type="checkbox" value="${escapeHtml(tool.value)}" />
+                <span>${escapeHtml(tool.label)}</span>
+              </label>
+            `).join("")}
+          </div>
+        `;
+      }
+
+      function getCheckedValues(form, name) {
+        return form.getAll(name).map((item) => String(item).trim()).filter(Boolean);
+      }
+
       function buildAgentConfigPayload(form, platformId, agentType) {
+        const prompt = String(form.get("promptTemplate") || "").trim();
         const definition = getAgentTypeDefinition(platformId, agentType);
-        const config = { agentType };
+        const config = {
+          agentType,
+          llmProvider: "openrouter",
+          defaultTriggerType: String(form.get("triggerType") || ""),
+          tools: getCheckedValues(form, "tools"),
+          toolInstructions: prompt
+        };
+        if (agentType === "dm_responder") {
+          config.escalationPolicy = "qualified_only";
+        }
         if (!definition) return config;
         definition.config_fields.forEach((field) => {
           config[field.key] = String(form.get(`agentConfig_${field.key}`) || field.options[0]?.value || "");
@@ -2018,68 +2548,321 @@
         return config;
       }
 
-      function renderSubagentConfigFields(platformId, agentType, actionType) {
-        const definition = getAgentTypeDefinition(platformId, agentType);
-        if (!definition) return `<div class="empty-state"><div class="empty">Selecciona un tipo de agente para ver su subagente operativo.</div></div>`;
-        const action = getChannelActions(platformId).find((item) => item.action_type === actionType);
-        const fieldSets = platformId === "customer_support" ? {
-          dm_responder: [
-            { key: "serviceLevel", label: "Tiempo objetivo", options: [["instant", "Inmediato"], ["under_minute", "Menos de 1 minuto"], ["under_five_minutes", "Menos de 5 minutos"]] },
-            { key: "handoffMode", label: "Escalado", options: [["qualify_then_handoff", "Escalar cuando no pueda resolver"], ["resolve_if_simple", "Resolver si es simple"], ["handoff_immediately", "Escalar de inmediato"]] },
-            { key: "conversationGoal", label: "Meta del asistente", options: [["resolve_support", "Resolver soporte"], ["capture_lead", "Captar lead"], ["book_call", "Agendar llamada"]] },
-            { key: "mediaMode", label: "Ayuda visual", options: [["none", "Sin media"], ["image_only", "Solo imagen"], ["video_only", "Solo video"], ["image_or_video", "Imagen o video"]] }
-          ]
-        } : {
-          dm_responder: [
-            { key: "serviceLevel", label: "Velocidad de respuesta", options: [["instant", "Inmediata"], ["same_shift", "Durante el turno"], ["same_day", "Mismo dia"]] },
-            { key: "handoffMode", label: "Escalado", options: [["qualify_then_handoff", "Calificar y escalar"], ["resolve_if_simple", "Resolver si es simple"], ["handoff_immediately", "Escalar de inmediato"]] },
-            { key: "conversationGoal", label: "Meta principal", options: [["capture_lead", "Captar lead"], ["support_triage", "Triage de soporte"], ["book_call", "Agendar llamada"]] },
-            { key: "mediaMode", label: "Media permitida", options: [["none", "No enviar media"], ["image_only", "Solo imagen"], ["video_only", "Solo video"], ["image_or_video", "Imagen o video"]] }
-          ],
-          comment_responder: [
-            { key: "moderationSweep", label: "Cobertura", options: [["sales_first", "Solo intencion comercial"], ["public_replies", "Responder publicamente"], ["moderate_all", "Moderar todo"]] },
-            { key: "replyDepth", label: "Profundidad", options: [["single_reply", "Una respuesta"], ["follow_thread", "Seguir hilo"], ["convert_to_dm", "Mover a DM"]] },
-            { key: "leadRouting", label: "Ruteo", options: [["sales", "Ventas"], ["community", "Community"], ["support", "Soporte"]] }
-          ],
-          publisher: [
-            { key: "contentSource", label: "Fuente de contenido", options: [["asset_library", "Libreria de assets"], ["drive_folder", "Carpeta compartida"], ["campaign_calendar", "Calendario de campana"]] },
-            { key: "publishingWindow", label: "Ventana de publicacion", options: [["morning", "Manana"], ["afternoon", "Tarde"], ["prime_time", "Prime time"]] },
-            { key: "approvalRoute", label: "Aprobacion", options: [["required", "Requiere revision"], ["fast_track", "Fast track"], ["auto_publish", "Autopublicar"]] },
-            { key: "assetMode", label: "Formato del asset", options: [["image", "Imagen"], ["video", "Video"], ["mixed", "Imagen o video"]] }
-          ],
-          ads_operator: [
-            { key: "campaignTempo", label: "Ritmo de campana", options: [["always_on", "Always on"], ["launch_sprint", "Sprint de lanzamiento"], ["retargeting_cycle", "Ciclo de retargeting"]] },
-            { key: "audiencePreset", label: "Audiencia", options: [["warm_leads", "Warm leads"], ["cold_interest", "Interes frio"], ["retargeting", "Retargeting"]] },
-            { key: "spendTier", label: "Inversion", options: [["low", "Baja"], ["medium", "Media"], ["high", "Alta"]] }
-          ]
+      function buildGlobalAgentConfigPayload(form, agentType, groupId, linkedAccounts) {
+        const prompt = String(form.get("promptTemplate") || "").trim();
+        const definition = getGlobalAgentTypeDefinition(agentType);
+        const config = {
+          agentType,
+          llmProvider: "openrouter",
+          defaultTriggerType: String(form.get("triggerType") || "manual"),
+          tools: getCheckedValues(form, "tools"),
+          toolInstructions: prompt,
+          multiChannelAgentId: groupId,
+          linkedChannels: [...new Set(linkedAccounts.map((account) => account.channel))],
+          linkedAccountIds: linkedAccounts.map((account) => account.id)
         };
-        const fields = fieldSets[agentType] || [];
-        if (!fields.length) return "";
+        if (agentType === "dm_responder") {
+          config.escalationPolicy = "qualified_only";
+        }
+        if (!definition) return config;
+        definition.config_fields.forEach((field) => {
+          config[field.key] = String(form.get(`agentConfig_${field.key}`) || field.options[0]?.value || "");
+        });
+        return config;
+      }
+
+      function renderManualActionSection(formId, actionDefinitions, options = {}) {
+        const targetPlaceholder = options.targetPlaceholder || "Ej: @cliente, comentario, chat o URL";
+        const promptPlaceholder = options.promptPlaceholder || "Describe exactamente que debe hacer el agente en esta accion manual: mensaje, contexto, archivos, restricciones y criterio de cierre.";
         return `
-          <div class="field">
-            <label>Subagente operativo</label>
-            <div class="helper-text">La rutina interna usara ${escapeHtml(action?.label || "la accion seleccionada")} con opciones cerradas.</div>
-          </div>
-          ${fields.map((field) => `
+          <form id="${escapeHtml(formId)}">
             <div class="field">
-              <label for="subagent_${field.key}">${escapeHtml(field.label)}</label>
-              <select id="subagent_${field.key}" name="subagent_${field.key}" form="genericAgentSetupForm">
-                ${field.options.map(([value, label]) => `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`).join("")}
+              <label for="${escapeHtml(formId)}Action">Accion manual</label>
+              <select id="${escapeHtml(formId)}Action" name="manualActionType">
+                ${actionDefinitions.map((item) => `<option value="${escapeHtml(item.action_type)}">${escapeHtml(item.label)}</option>`).join("")}
               </select>
+              <div class="helper-text">Puedes ejecutar manualmente cualquier accion disponible para este canal.</div>
             </div>
-          `).join("")}
+            <div class="field">
+              <label for="${escapeHtml(formId)}Target">Destino o referencia</label>
+              <input id="${escapeHtml(formId)}Target" name="manualTargetRef" placeholder="${escapeHtml(targetPlaceholder)}" />
+            </div>
+            <div class="chart-grid">
+              <div class="field">
+                <label for="${escapeHtml(formId)}AppointmentStartsAt">Fecha/hora si es cita</label>
+                <input id="${escapeHtml(formId)}AppointmentStartsAt" name="manualAppointmentStartsAt" type="datetime-local" />
+              </div>
+              <div class="field">
+                <label for="${escapeHtml(formId)}AppointmentDuration">Duracion cita</label>
+                <input id="${escapeHtml(formId)}AppointmentDuration" name="manualAppointmentDurationMinutes" type="number" min="15" max="240" step="15" value="30" />
+              </div>
+            </div>
+            <div class="helper-text">Estos campos solo se usan cuando la accion manual es Agendar cita; si se dejan vacios, el backend agenda una prueba para manana.</div>
+            <div class="field">
+              <label for="${escapeHtml(formId)}Prompt">Instrucciones</label>
+              <textarea id="${escapeHtml(formId)}Prompt" name="manualPrompt" placeholder="${escapeHtml(promptPlaceholder)}"></textarea>
+            </div>
+            <div class="section-actions">
+              <button class="button" type="submit" ${actionDefinitions.length ? "" : "disabled"}>Ejecutar accion manual</button>
+            </div>
+          </form>
         `;
       }
 
-      function buildSubagentConfigPayload(form, agentType) {
-        const fieldKeysByType = {
-          dm_responder: ["serviceLevel", "handoffMode", "conversationGoal", "mediaMode"],
-          comment_responder: ["moderationSweep", "replyDepth", "leadRouting"],
-          publisher: ["contentSource", "publishingWindow", "approvalRoute", "assetMode"],
-          ads_operator: ["campaignTempo", "audiencePreset", "spendTier"]
-        };
-        const keys = fieldKeysByType[agentType] || [];
-        return Object.fromEntries(keys.map((key) => [key, String(form.get(`subagent_${key}`) || "")]));
+      async function submitManualChannelAction(event, account, platform, actionDefinitions) {
+        event.preventDefault();
+        const form = new FormData(event.currentTarget);
+        const actionType = String(form.get("manualActionType") || "");
+        const selectedAction = actionDefinitions.find((item) => item.action_type === actionType);
+        if (!selectedAction) {
+          setStatus("Selecciona una accion manual valida.", true);
+          return;
+        }
+
+        const prompt = String(form.get("manualPrompt") || "").trim();
+        const targetRef = String(form.get("manualTargetRef") || "").trim();
+        const appointmentStartsAt = String(form.get("manualAppointmentStartsAt") || "").trim();
+        const appointmentDurationMinutes = String(form.get("manualAppointmentDurationMinutes") || "").trim();
+        const title = `Manual · ${selectedAction.label}`;
+        const flow = await postJson("/api/channels/flows", {
+          accountId: account.id,
+          channel: platform.id,
+          name: `Manual · ${selectedAction.label}`,
+          objective: prompt || selectedAction.description || title,
+          triggerType: "manual",
+          actionType,
+          contentType: selectedAction.content_type,
+          promptTemplate: prompt,
+          actionConfig: {
+            mode: "manual",
+            targetRef,
+            prompt,
+            appointmentStartsAt,
+            appointmentDurationMinutes,
+            source: "dashboard_manual_action"
+          },
+          status: "active"
+        });
+
+        const job = await postJson("/api/channels/jobs", {
+          accountId: account.id,
+          channel: platform.id,
+          flowId: flow?.id,
+          title,
+          targetRef,
+          payload: {
+            mode: "manual",
+            actionType,
+            contentType: selectedAction.content_type || null,
+            prompt,
+            targetRef,
+            appointmentTitle: targetRef || title,
+            appointmentStartsAt,
+            appointmentDurationMinutes,
+            source: "dashboard_manual_action"
+          },
+          provider: "native"
+        });
+        if (job?.id) {
+          await postJson(`/api/channels/jobs/${job.id}/execute`, {});
+        }
+        await loadData("Accion manual ejecutada.");
+      }
+
+      function renderGlobalAgentPanel() {
+        const allAgentTypes = getAllAgentTypeDefinitions();
+        const supportsPublisherAgent = allAgentTypes.some((item) => item.agent_type === "publisher");
+        const supportsAdsAgent = allAgentTypes.some((item) => item.agent_type === "ads_operator");
+        const supportsVoiceAgent = Boolean(state.snapshot) || getAccountsForPlatform("phone").length > 0;
+        const agentTabs = [
+          { key: "general", label: "Agentes" },
+          ...(supportsPublisherAgent ? [{ key: "publisher", label: "Posts y videos" }] : []),
+          ...(supportsAdsAgent ? [{ key: "ads", label: "Publicidad" }] : []),
+          ...(supportsVoiceAgent ? [{ key: "voice", label: "Llamadas" }] : [])
+        ];
+        const selectedTab = agentTabs.some((item) => item.key === state.globalAgentTab) ? state.globalAgentTab : "general";
+        const agentTypes = selectedTab === "publisher"
+          ? allAgentTypes.filter((item) => item.agent_type === "publisher")
+          : selectedTab === "ads"
+            ? allAgentTypes.filter((item) => item.agent_type === "ads_operator")
+            : selectedTab === "voice"
+              ? []
+            : allAgentTypes.filter((item) => item.agent_type !== "publisher" && item.agent_type !== "ads_operator");
+        const selectedAgentType = state.globalAgentType && agentTypes.some((item) => item.agent_type === state.globalAgentType)
+          ? state.globalAgentType
+          : (agentTypes[0]?.agent_type || "");
+        const promptPlaceholder = selectedTab === "publisher"
+          ? "Escribe las reglas para publicar: calendario, formato, assets, captions, hashtags, aprobacion, limites de marca y que hacer si falta contenido."
+          : selectedTab === "ads"
+            ? "Escribe las reglas del agente de publicidad: presupuesto, audiencia, conversion, creativos, aprobacion, optimizacion, pixel/eventos, reporte y limites."
+            : "Escribe las instrucciones globales del agente: objetivo, tono, reglas, tools, limites y diferencias entre canales.";
+
+        if (selectedTab === "voice") {
+          const phoneAccount = getAccountsForPlatform("phone")[0];
+          globalAgentPanel.innerHTML = `
+            <div class="section-card">
+              <div class="section-row">
+                <div>
+                  <div class="item-title">Crear agente de llamadas</div>
+                  <div class="item-sub">El telefono queda como conexion de linea. Aqui creas la logica del agente de voz y su flow.</div>
+                </div>
+                <div class="badge info">Voz</div>
+              </div>
+              <div class="support-filter-row" style="margin-top: 14px;">
+                ${agentTabs.map((tab) => `<button class="soft-button support-filter-button ${selectedTab === tab.key ? "active" : ""}" type="button" data-global-agent-tab="${escapeHtml(tab.key)}">${escapeHtml(tab.label)}</button>`).join("")}
+              </div>
+              <form id="globalVoiceAgentSetupForm" style="margin-top: 16px;">
+                <div class="chart-grid">
+                  <div>
+                    <div class="field"><label for="globalVoiceAgentName">Nombre del agente</label><input id="globalVoiceAgentName" name="agentName" placeholder="Agente de citas por telefono" /></div>
+                    <div class="field"><label for="globalVoiceFromNumber">Numero de salida</label><input id="globalVoiceFromNumber" name="fromNumber" placeholder="+15005550006" value="${escapeHtml(phoneAccount?.handle || "")}" /></div>
+                    <div class="field"><label for="globalVoiceVoice">Voz</label><select id="globalVoiceVoice" name="voice">
+                      <option value="alice">Alice</option>
+                      <option value="marin">Marin</option>
+                      <option value="verse">Verse</option>
+                    </select></div>
+                    <div class="field"><label for="globalVoiceLanguage">Idioma</label><select id="globalVoiceLanguage" name="language">
+                      <option value="es-MX">Español MX</option>
+                      <option value="es-US">Español US</option>
+                      <option value="en-US">English US</option>
+                    </select></div>
+                    <div class="field"><label for="globalVoiceIntroPrompt">Prompt inicial del agente</label><textarea id="globalVoiceIntroPrompt" name="introPrompt" placeholder="Define como saluda, que datos debe pedir y cuando debe detenerse."></textarea></div>
+                  </div>
+                  <div>
+                    <div class="field"><label for="globalVoiceFlowName">Nombre del flow</label><input id="globalVoiceFlowName" name="flowName" placeholder="Confirmacion de cita" /></div>
+                    <div class="field"><label for="globalVoiceObjective">Objetivo</label><input id="globalVoiceObjective" name="objective" placeholder="Confirmar, reagendar o cancelar una cita" /></div>
+                    <div class="field"><label for="globalVoiceMode">Modo</label><select id="globalVoiceMode" name="mode">
+                      <option value="ai">AI conversacional</option>
+                      <option value="realtime">Realtime</option>
+                      <option value="dtmf">Teclado / DTMF</option>
+                    </select></div>
+                    <div class="field"><label for="globalVoiceMaxTurns">Max turnos</label><input id="globalVoiceMaxTurns" name="maxTurns" type="number" min="1" max="20" value="6" /></div>
+                    <div class="field"><label for="globalVoiceFlowPrompt">Prompt del flow</label><textarea id="globalVoiceFlowPrompt" name="promptTemplate" placeholder="Escribe el guion: objetivo, preguntas, confirmaciones, objeciones, agenda y cierre."></textarea></div>
+                    <div class="field"><label for="globalVoiceSystemPrompt">System prompt</label><textarea id="globalVoiceSystemPrompt" name="systemPrompt" placeholder="Reglas internas para el modelo de voz."></textarea></div>
+                  </div>
+                </div>
+                <div class="section-actions"><button class="button" type="submit">Guardar agente de llamadas</button></div>
+              </form>
+            </div>
+          `;
+          globalAgentPanel.querySelectorAll("[data-global-agent-tab]").forEach((button) => {
+            button.addEventListener("click", () => {
+              state.globalAgentTab = button.getAttribute("data-global-agent-tab") || "general";
+              state.globalAgentType = "";
+              renderGlobalAgentPanel();
+            });
+          });
+          document.getElementById("globalVoiceAgentSetupForm").addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const form = new FormData(event.currentTarget);
+            await postJson("/api/voice/agents", {
+              name: form.get("agentName"),
+              fromNumber: form.get("fromNumber"),
+              voice: form.get("voice"),
+              language: form.get("language"),
+              introPrompt: form.get("introPrompt"),
+              status: "active"
+            });
+            await postJson("/api/voice/flows", {
+              name: form.get("flowName"),
+              objective: form.get("objective"),
+              promptTemplate: form.get("promptTemplate"),
+              mode: form.get("mode"),
+              systemPrompt: form.get("systemPrompt"),
+              maxTurns: Number(form.get("maxTurns") || 6),
+              status: "active"
+            });
+            await loadData("Agente de llamadas creado.");
+          });
+          return;
+        }
+
+        globalAgentPanel.innerHTML = `
+          <div class="section-card">
+            <div class="section-row">
+              <div>
+                <div class="item-title">Crear agente multicanal</div>
+                <div class="item-sub">El agente se define una vez y se conecta a varias cuentas/canales. Internamente se guarda una instancia compatible por canal.</div>
+              </div>
+              <div class="badge info">${allAgentTypes.length} tipos</div>
+            </div>
+            <div class="support-filter-row" style="margin-top: 14px;">
+              ${agentTabs.map((tab) => `<button class="soft-button support-filter-button ${selectedTab === tab.key ? "active" : ""}" type="button" data-global-agent-tab="${escapeHtml(tab.key)}">${escapeHtml(tab.label)}</button>`).join("")}
+            </div>
+            <form id="globalAgentSetupForm" style="margin-top: 16px;">
+              <div class="chart-grid">
+                <div>
+                  <div class="field"><label for="globalAgentName">Nombre del agente</label><input id="globalAgentName" name="name" placeholder="Agente de ventas multicanal" /></div>
+                  <div class="field"><label for="globalAgentType">Tipo de agente</label><select id="globalAgentType" name="agentType"></select></div>
+                  <div class="field"><label for="globalAgentObjective">Objetivo</label><input id="globalAgentObjective" name="objective" placeholder="Atender, publicar u optimizar campañas en varios canales" /></div>
+                  <div class="field"><label for="globalAgentTrigger">Activacion</label><select id="globalAgentTrigger" name="triggerType">
+                    <option value="manual">Manual</option>
+                    <option value="new_message">Nuevo mensaje</option>
+                    <option value="new_dm">Nuevo DM</option>
+                    <option value="new_comment">Nuevo comentario</option>
+                    <option value="schedule_daily">Programado diario</option>
+                    <option value="campaign_window">Ventana de campana</option>
+                  </select></div>
+                  <div class="field"><label>Tools del agente</label>${renderAudioToolCheckboxes()}</div>
+                  <div class="field"><label for="globalAgentPrompt">Prompt</label><textarea id="globalAgentPrompt" name="promptTemplate" placeholder="${escapeHtml(promptPlaceholder)}"></textarea></div>
+                </div>
+                <div>
+                  <div class="field">
+                    <label>Canales y cuentas conectadas</label>
+                    <div class="helper-text">Selecciona todas las cuentas donde este agente debe operar.</div>
+                    <div id="globalAgentAccountTargets" style="margin-top: 10px;">${renderGlobalAgentAccountCheckboxes(selectedAgentType)}</div>
+                  </div>
+                  <div id="globalAgentConfigFields">${renderGlobalAgentConfigFields(selectedAgentType)}</div>
+                </div>
+              </div>
+              <div class="section-actions">
+                <button class="button" type="submit" ${agentTypes.length ? "" : "disabled"}>Guardar agente multicanal</button>
+              </div>
+            </form>
+          </div>
+        `;
+
+        fillValueSelect(document.getElementById("globalAgentType"), agentTypes, "agent_type", "label", "Selecciona un tipo");
+        globalAgentPanel.querySelectorAll("[data-global-agent-tab]").forEach((button) => {
+          button.addEventListener("click", () => {
+            state.globalAgentTab = button.getAttribute("data-global-agent-tab") || "general";
+            state.globalAgentType = "";
+            renderGlobalAgentPanel();
+          });
+        });
+        const globalAgentType = document.getElementById("globalAgentType");
+        const globalAgentTargets = document.getElementById("globalAgentAccountTargets");
+        const globalAgentConfigFields = document.getElementById("globalAgentConfigFields");
+        globalAgentType.value = selectedAgentType;
+        globalAgentType.addEventListener("change", () => {
+          state.globalAgentType = globalAgentType.value;
+          globalAgentTargets.innerHTML = renderGlobalAgentAccountCheckboxes(globalAgentType.value);
+          globalAgentConfigFields.innerHTML = renderGlobalAgentConfigFields(globalAgentType.value);
+        });
+
+        document.getElementById("globalAgentSetupForm").addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const form = new FormData(event.currentTarget);
+          const agentType = String(form.get("agentType") || "");
+          const selectedAccountIds = form.getAll("targetAccountIds").map((item) => String(item));
+          const linkedAccounts = (getGenericSnapshot().accounts ?? []).filter((account) => selectedAccountIds.includes(account.id));
+          if (!linkedAccounts.length) {
+            setStatus("Selecciona al menos una cuenta/canal para el agente.", true);
+            return;
+          }
+          const groupId = makeId("agent-group");
+          const config = buildGlobalAgentConfigPayload(form, agentType, groupId, linkedAccounts);
+          await Promise.all(linkedAccounts.map((account) => postJson("/api/channels/agents", {
+            accountId: account.id,
+            channel: account.channel,
+            name: form.get("name"),
+            agentType,
+            objective: form.get("objective"),
+            status: "active",
+            config: { ...config, currentChannel: account.channel, currentAccountId: account.id }
+          })));
+          await loadData("Agente multicanal creado.");
+        });
       }
 
       function renderAccounts() {
@@ -2091,6 +2874,12 @@
         accountsCount.textContent = String(accounts.length);
         selectedPlatformBadge.textContent = platform.label;
         selectedPlatformBadge.className = `badge info ${platform.tone}`;
+        const oauthConnectPanel = document.getElementById("oauthConnectPanel");
+        oauthConnectPanel.innerHTML = renderOAuthConnectPanel(platform);
+        const oauthConnectButton = document.getElementById("oauthConnectButton");
+        if (oauthConnectButton) {
+          oauthConnectButton.addEventListener("click", () => startOAuthConnect(platform.id));
+        }
 
         accountsList.innerHTML = accounts.length
           ? accounts.map((account) => `
@@ -2110,12 +2899,16 @@
           button.addEventListener("click", () => setAccount(button.dataset.accountId));
         });
 
+        const actionsPanelTitle = platform.id === "customer_support" ? "Capacidades del asistente web" : "Acciones del canal";
+        const actionsPanelSubtitle = platform.id === "customer_support"
+          ? `Lo que el asistente puede hacer dentro de ${platform.label}: responder, sugerir ayuda, capturar tickets y escalar.`
+          : `Opciones disponibles para ${platform.label}.`;
         accountActionsPanel.innerHTML = `
           <div class="section-card">
             <div class="section-row">
               <div>
-                <div class="item-title">Acciones del canal</div>
-                <div class="item-sub">Opciones disponibles para ${escapeHtml(platform.label)}.</div>
+                <div class="item-title">${escapeHtml(actionsPanelTitle)}</div>
+                <div class="item-sub">${escapeHtml(actionsPanelSubtitle)}</div>
               </div>
               <div class="count-badge">${actionDefinitions.length}</div>
             </div>
@@ -2149,7 +2942,343 @@
           renderPhoneDetail(account);
           return;
         }
+        if (platform.id === "customer_support") {
+          renderCustomerSupportDetail(account);
+          return;
+        }
         renderGenericDetail(account);
+      }
+
+      function renderCustomerSupportDetail(account) {
+        const platform = getSelectedPlatform();
+        const agents = state.channelSnapshot ? getChannelAgentsForAccount(account.id) : account.agents;
+        const flows = state.channelSnapshot ? getChannelFlowsForAccount(account.id) : account.automations;
+        const jobs = state.channelSnapshot ? getChannelJobsForAccount(account.id) : [];
+        const actionDefinitions = getChannelActions(platform.id);
+        const triggerDefinitions = getChannelTriggers(platform.id);
+        const agentTypeDefinitions = getChannelAgentTypes(platform.id);
+        const opsSection = getChannelSummarySection(platform.id, "customer_support_ops");
+        const chatJobs = jobs.filter((item) => getJobActionType(item) === "answer_chat");
+        const articleJobs = jobs.filter((item) => getJobActionType(item) === "suggest_article");
+        const ticketJobs = jobs.filter((item) => getJobActionType(item) === "capture_ticket");
+        const mediaJobs = jobs.filter((item) => getJobActionType(item) === "send_media");
+        const handoffJobs = jobs.filter((item) => getJobActionType(item) === "handoff_agent");
+        const allInboxSessions = getCustomerSupportInboxSessions(account.id);
+        const inboxSessions = getFilteredCustomerSupportInboxSessions(account.id);
+        const selectedInboxSession = getSelectedCustomerSupportInboxSession(account.id);
+        const selectedInboxDetail = selectedInboxSession ? state.customerSupportInboxSessionDetails[selectedInboxSession.id] : null;
+        const isInboxLoading = selectedInboxSession ? Boolean(state.customerSupportInboxLoading[selectedInboxSession.id]) : false;
+        const openInboxSessions = allInboxSessions.filter((item) => item.status === "active" || item.status === "handoff_requested");
+        const resolvedInboxSessions = allInboxSessions.filter((item) => item.status === "resolved" || item.status === "closed");
+        const handoffInboxSessions = allInboxSessions.filter((item) => item.status === "handoff_requested");
+
+        if (selectedInboxSession && !selectedInboxDetail && !state.customerSupportInboxLoading[selectedInboxSession.id]) {
+          loadCustomerSupportInboxSession(selectedInboxSession.id, { silent: true });
+        }
+
+        detailRoot.innerHTML = `
+          <div class="hero-card">
+            <div class="section-row">
+              <div>
+                <h3 class="hero-title" style="font-size: 24px;">${escapeHtml(account.name)}</h3>
+                <div class="helper-text">${escapeHtml(account.handle || "Sin dominio")} · Widget web de soporte y atención al cliente.</div>
+              </div>
+              <div class="badge ${account.status === "connected" ? "ok" : "warn"}">${account.status === "connected" ? "Asistente activo" : "Pendiente de conexión"}</div>
+            </div>
+          </div>
+
+          <div class="summary-grid">
+            <div class="metric-card"><div class="metric-label">Asistentes</div><div class="display metric-value">${agents.length}</div></div>
+            <div class="metric-card"><div class="metric-label">Acciones manuales</div><div class="display metric-value">${jobs.length}</div></div>
+            <div class="metric-card"><div class="metric-label">Chats respondidos</div><div class="display metric-value">${getSectionItemValue(opsSection, "chats_answered") || chatJobs.length}</div></div>
+            <div class="metric-card"><div class="metric-label">Handoffs</div><div class="display metric-value">${getSectionItemValue(opsSection, "handoffs") || handoffJobs.length}</div></div>
+          </div>
+
+          <div class="section-card" style="margin-top: 14px;">
+            <div class="section-row">
+              <div>
+                <div class="chart-title">Inbox humano</div>
+                <div class="helper-text">Lista real de sesiones del widget, con prioridad para handoffs y respuesta manual desde el dashboard.</div>
+              </div>
+              <div class="support-inline-meta">
+                <div class="badge info">${allInboxSessions.length} sesiones</div>
+                <div class="badge warn">${handoffInboxSessions.length} handoffs</div>
+                <div class="badge ok">${resolvedInboxSessions.length} resueltas</div>
+              </div>
+            </div>
+            <div class="support-filter-row" style="margin-top: 14px;">
+              ${[
+                { key: "all", label: `Todas (${allInboxSessions.length})` },
+                { key: "handoff", label: `Handoff (${handoffInboxSessions.length})` },
+                { key: "open", label: `Abiertas (${openInboxSessions.length})` },
+                { key: "resolved", label: `Resueltas (${resolvedInboxSessions.length})` }
+              ].map((filter) => `
+                <button
+                  class="soft-button support-filter-button ${getCustomerSupportInboxFilter(account.id) === filter.key ? "active" : ""}"
+                  type="button"
+                  data-support-filter="${filter.key}"
+                >${escapeHtml(filter.label)}</button>
+              `).join("")}
+            </div>
+            <div class="support-inbox-layout" style="margin-top: 14px;">
+              <div class="support-session-list">
+                ${inboxSessions.length
+                  ? inboxSessions.map((session) => `
+                      <button
+                        class="support-session-item ${selectedInboxSession?.id === session.id ? "active" : ""}"
+                        type="button"
+                        data-support-session-id="${session.id}"
+                      >
+                        <div class="item-row">
+                          <div>
+                            <div class="item-title">${escapeHtml(getCustomerSupportSessionVisitorLabel(session))}</div>
+                            <div class="item-sub">${escapeHtml(session.visitor_email || session.source_url || session.public_widget_key || "Widget web")}</div>
+                          </div>
+                          <div class="badge ${session.status === "handoff_requested" ? "warn" : session.status === "resolved" || session.status === "closed" ? "ok" : "info"}">
+                            ${escapeHtml(session.status)}
+                          </div>
+                        </div>
+                        <div class="support-session-preview">${escapeHtml(getCustomerSupportSessionContext(session))}</div>
+                        <div class="support-session-time">${escapeHtml(formatDateTime(session.last_message_at || session.created_at))}</div>
+                      </button>
+                    `).join("")
+                  : `<div class="support-thread-empty">No hay sesiones en este filtro para esta cuenta.</div>`}
+              </div>
+              <div class="support-thread-panel">
+                ${selectedInboxSession ? `
+                  <div class="section-row">
+                    <div>
+                      <div class="item-title">${escapeHtml(getCustomerSupportSessionVisitorLabel(selectedInboxSession))}</div>
+                      <div class="item-sub">${escapeHtml(selectedInboxSession.visitor_email || selectedInboxSession.source_url || "Widget web")} · ${escapeHtml(formatDateTime(selectedInboxSession.last_message_at || selectedInboxSession.created_at))}</div>
+                    </div>
+                    <div class="support-inline-meta">
+                      <div class="badge ${selectedInboxSession.status === "handoff_requested" ? "warn" : selectedInboxSession.status === "resolved" || selectedInboxSession.status === "closed" ? "ok" : "info"}">${escapeHtml(selectedInboxSession.status)}</div>
+                      <button class="ghost-button" type="button" data-support-refresh="${selectedInboxSession.id}">Recargar</button>
+                    </div>
+                  </div>
+                  <div class="support-inline-meta">
+                    <button class="soft-button" type="button" data-support-status="active">Marcar activa</button>
+                    <button class="soft-button" type="button" data-support-status="resolved">Resolver</button>
+                    <button class="soft-button" type="button" data-support-status="closed">Cerrar</button>
+                  </div>
+                  <div class="support-thread-body">
+                    <div class="support-thread-stack">
+                      ${isInboxLoading && !selectedInboxDetail
+                        ? `<div class="support-thread-empty">Cargando conversacion...</div>`
+                        : selectedInboxDetail?.messages?.length
+                          ? selectedInboxDetail.messages.map((message) => `
+                              <div>
+                                <div class="thread-meta">
+                                  <span>${escapeHtml(getCustomerSupportMessageAuthor(message))}</span>
+                                  <span>${escapeHtml(message.message_type || "text")} · ${escapeHtml(formatDateTime(message.created_at))}</span>
+                                </div>
+                                <div class="thread-bubble ${getCustomerSupportMessageBubbleClass(message)}">${escapeHtml(message.content || "Sin contenido")}</div>
+                              </div>
+                            `).join("")
+                          : `<div class="support-thread-empty">Todavia no hay mensajes cargados para esta sesion.</div>`}
+                    </div>
+                    <form id="supportInboxReplyForm" class="support-composer">
+                      <div>
+                        <label for="supportInboxReply">Responder como humano</label>
+                        <textarea id="supportInboxReply" name="text" placeholder="Escribe la respuesta del equipo para continuar esta conversacion."></textarea>
+                      </div>
+                      <label class="support-checkbox">
+                        <input id="supportInboxResolve" name="markAsResolved" type="checkbox" />
+                        <span>Marcar como resuelta al enviar</span>
+                      </label>
+                      <div class="section-actions">
+                        <button class="button" type="submit">Enviar respuesta</button>
+                      </div>
+                    </form>
+                  </div>
+                ` : `
+                  <div class="support-thread-empty">Selecciona una sesion para ver el thread y responder.</div>
+                `}
+              </div>
+            </div>
+          </div>
+
+          <div class="chart-grid" style="margin-top: 14px;">
+            <div class="section-card">
+              <div class="item-title">Agentes multicanal</div>
+              <div class="helper-text" style="margin-bottom: 14px;">El asistente web ahora se crea desde el panel global de arriba. Puedes conectarlo a soporte y a otros canales desde el mismo agente.</div>
+              <div class="section-actions">
+                <button class="soft-button" type="button" data-scroll-global-agent>Ir a crear agente</button>
+              </div>
+            </div>
+            <div class="section-card">
+              <div class="chart-title">Bandeja del sitio</div>
+              <div class="spotlight-subtitle">Esta cuenta vive como un inbox web. Aquí deberían verse las conversaciones recientes y el tipo de ayuda que ya está entregando el asistente.</div>
+              ${renderConversationPreview([...chatJobs, ...mediaJobs], {
+                emptyMessage: "Todavia no hay conversaciones recientes del sitio.",
+                channelLabel: "Chat web",
+                limit: 4,
+                userText: "Visitante del sitio",
+                systemText: "Respuesta del asistente web."
+              })}
+              <div style="margin-top: 14px;">
+                ${renderMetricPillGrid([
+                  { label: "Primer reply", value: averageJobMetric(chatJobs, "firstResponseSeconds"), suffix: "s", subtitle: "Tiempo promedio en contestar desde el widget." },
+                  { label: "Satisfacción", value: averageJobMetric(chatJobs, "satisfactionScore"), suffix: "%", subtitle: "Señal de calidad después del intercambio." },
+                  { label: "Media", value: mediaJobs.length, subtitle: "Imágenes o videos compartidos en el chat." }
+                ])}
+              </div>
+            </div>
+          </div>
+
+          <div class="chart-grid" style="margin-top: 14px;">
+            <div class="section-card">
+              <div class="chart-title">Accion manual</div>
+              <div class="helper-text" style="margin-bottom: 14px;">Ejecuta manualmente cualquier accion que podria hacer el asistente web: responder chat, sugerir articulo, crear ticket, mandar media o escalar.</div>
+              ${renderManualActionSection("supportManualActionForm", actionDefinitions, {
+                targetPlaceholder: "Ej: visitante, ticket, chat o URL",
+                promptPlaceholder: "Indica que debe hacer soporte ahora: respuesta, articulo, ticket, media o escalado, con todo el contexto necesario."
+              })}
+            </div>
+            <div class="section-card">
+              <div class="chart-title">Conocimiento, tickets y escalado</div>
+              ${renderTimelineStack(
+                [...articleJobs, ...ticketJobs, ...handoffJobs].slice(0, 6).map((job) => ({
+                  label: getJobActionType(job) || "support",
+                  title: job.title || "Evento de soporte",
+                  subtitle: job.result_summary || "Acción ejecutada por el asistente del sitio.",
+                  kpis: [
+                    `estado ${job.status || "queued"}`,
+                    `resultado ${job.outcome || "n/a"}`
+                  ]
+                })),
+                "Todavia no hay artículos sugeridos, tickets o handoffs en esta cuenta."
+              )}
+            </div>
+          </div>
+
+          <div class="chart-grid" style="margin-top: 14px;">
+            <div class="section-card">
+              <div class="chart-title">Equipo configurado</div>
+              ${agents.length
+                ? agents.map((item) => `
+                        <div class="list-card">
+                          <div class="item-row">
+                            <div>
+                              <div class="item-title">${escapeHtml(item.name)}</div>
+                              <div class="item-sub">${escapeHtml(item.objective || item.persona_prompt || "Sin objetivo")}</div>
+                            </div>
+                            <div class="badge info">${escapeHtml(getAgentTypeLabel(platform.id, item.config?.agentType))}</div>
+                          </div>
+                          <div class="helper-text" style="margin-top: 10px;">Activacion: ${escapeHtml(item.config?.defaultTriggerType || "manual")}</div>
+                          <div class="helper-text" style="margin-top: 8px;">LLM: ${escapeHtml(item.config?.llmProvider || "openrouter")} · Tools: ${escapeHtml((item.config?.tools || []).join(", ") || "pendientes")}</div>
+                        </div>
+                  `).join("")
+                : `<div class="empty-state"><div class="empty">Todavia no hay asistentes configurados para esta cuenta.</div></div>`}
+            </div>
+            <div class="section-card">
+              <div class="chart-title">Salud del soporte</div>
+              ${renderMetricPillGrid([
+                { label: "Artículos", value: getSectionItemValue(opsSection, "articles_suggested") || articleJobs.length, subtitle: "Piezas de ayuda sugeridas dentro del chat." },
+                { label: "Tickets", value: getSectionItemValue(opsSection, "tickets_created") || ticketJobs.length, subtitle: "Casos abiertos para seguimiento humano." },
+                { label: "Handoffs", value: getSectionItemValue(opsSection, "handoffs") || handoffJobs.length, subtitle: "Escalados a soporte o ventas." },
+                { label: "Deflection", value: averageJobMetric(articleJobs, "deflectionRate"), suffix: "%", subtitle: "Resueltos con ayuda sin abrir ticket." },
+                { label: "SLA", value: averageJobMetric(ticketJobs, "slaHours"), suffix: "h", subtitle: "Objetivo promedio de atención posterior." },
+                { label: "Espera", value: averageJobMetric(handoffJobs, "waitMinutes"), suffix: "m", subtitle: "Tiempo promedio antes del pase a humano." }
+              ])}
+            </div>
+          </div>
+
+          <div class="section-card" style="margin-top: 14px;">
+            <div class="chart-title">Actividad reciente del sitio</div>
+            ${renderTimelineStack(
+              jobs.slice(0, 8).map((item) => ({
+                label: getJobActionType(item) || "support",
+                title: item.title || "Interacción del asistente",
+                subtitle: item.result_summary || item.target_ref || "Evento reciente del soporte web.",
+                kpis: [
+                  `estado ${item.status || "queued"}`,
+                  `resultado ${item.outcome || "n/a"}`
+                ]
+              })),
+              "Todavia no hay actividad reciente para esta cuenta."
+            )}
+          </div>
+        `;
+
+        const supportInboxReplyForm = document.getElementById("supportInboxReplyForm");
+        const supportManualActionForm = document.getElementById("supportManualActionForm");
+
+        detailRoot.querySelectorAll("[data-scroll-global-agent]").forEach((button) => {
+          button.addEventListener("click", () => {
+            setEditorTab("agents");
+          });
+        });
+        if (supportManualActionForm) {
+          supportManualActionForm.addEventListener("submit", (event) => submitManualChannelAction(event, account, platform, actionDefinitions));
+        }
+
+        detailRoot.querySelectorAll("[data-support-filter]").forEach((button) => {
+          button.addEventListener("click", () => {
+            state.customerSupportInboxFilterByAccount[account.id] = button.getAttribute("data-support-filter") || "all";
+            ensureCustomerSupportInboxSelection(account.id);
+            renderApp();
+          });
+        });
+
+        detailRoot.querySelectorAll("[data-support-session-id]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            const sessionId = button.getAttribute("data-support-session-id");
+            if (!sessionId) return;
+            state.selectedCustomerSupportSessionIdByAccount[account.id] = sessionId;
+            renderApp();
+            await loadCustomerSupportInboxSession(sessionId, { silent: true });
+          });
+        });
+
+        detailRoot.querySelectorAll("[data-support-refresh]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            const sessionId = button.getAttribute("data-support-refresh");
+            if (!sessionId) return;
+            await loadCustomerSupportInboxSession(sessionId);
+          });
+        });
+
+        detailRoot.querySelectorAll("[data-support-status]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            if (!selectedInboxSession) return;
+            const status = button.getAttribute("data-support-status");
+            if (!status) return;
+            const data = await patchJson(`/api/customer-support/inbox/sessions/${selectedInboxSession.id}`, { status });
+            if (data?.session) {
+              upsertCustomerSupportInboxSession(data.session);
+              state.customerSupportInboxSessionDetails[selectedInboxSession.id] = data;
+              renderApp();
+              setStatus(`Sesion ${status} actualizada.`, false, true);
+            }
+          });
+        });
+
+        if (supportInboxReplyForm) {
+          supportInboxReplyForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            if (!selectedInboxSession) return;
+            const form = new FormData(event.currentTarget);
+            const text = String(form.get("text") || "").trim();
+            if (!text) {
+              setStatus("Escribe una respuesta antes de enviarla.", true);
+              return;
+            }
+            const data = await postJson(`/api/customer-support/inbox/sessions/${selectedInboxSession.id}/messages`, {
+              text,
+              agentName: "Agente humano",
+              markAsResolved: form.get("markAsResolved") === "on"
+            });
+            if (data?.session) {
+              upsertCustomerSupportInboxSession(data.session);
+              state.customerSupportInboxSessionDetails[selectedInboxSession.id] = data;
+              supportInboxReplyForm.reset();
+              renderApp();
+              setStatus("Respuesta humana enviada.", false, true);
+            }
+          });
+        }
+
       }
 
       function renderGenericDetail(account) {
@@ -2158,12 +3287,6 @@
         const flows = state.channelSnapshot ? getChannelFlowsForAccount(account.id) : account.automations;
         const jobs = state.channelSnapshot ? getChannelJobsForAccount(account.id) : [];
         const actionDefinitions = getChannelActions(platform.id);
-        const triggerDefinitions = getChannelTriggers(platform.id);
-        const agentTypeDefinitions = getChannelAgentTypes(platform.id);
-        const flowByAgentId = new Map(flows.filter((item) => item.agent_id).map((item) => [item.agent_id, item]));
-        const triggerLabelById = Object.fromEntries(triggerDefinitions.map((item) => [item.trigger_type, item.label]));
-        const actionLabelById = Object.fromEntries(actionDefinitions.map((item) => [item.action_type, item.label]));
-        const isCustomerSupport = platform.id === "customer_support";
 
         detailRoot.innerHTML = `
           <div class="hero-card">
@@ -2178,43 +3301,26 @@
 
           <div class="summary-grid">
             <div class="metric-card"><div class="metric-label">Agentes</div><div class="display metric-value">${agents.length}</div></div>
-            <div class="metric-card"><div class="metric-label">Subagentes</div><div class="display metric-value">${flows.length}</div></div>
+            <div class="metric-card"><div class="metric-label">Acciones manuales</div><div class="display metric-value">${jobs.length}</div></div>
             <div class="metric-card"><div class="metric-label">Ejecuciones</div><div class="display metric-value">${jobs.length}</div></div>
             <div class="metric-card"><div class="metric-label">Acciones disponibles</div><div class="display metric-value">${actionDefinitions.length}</div></div>
           </div>
 
           <div class="chart-grid" style="margin-top: 14px;">
             <div class="section-card">
-              <div class="item-title">${isCustomerSupport ? "Configurar asistente web" : "Personalizar agente"}</div>
-              <div class="helper-text" style="margin-bottom: 14px;">${isCustomerSupport ? "Configura el asistente de tu página: cómo responde, cuándo escala y qué tipo de ayuda comparte." : "Aqui defines el agente y su subagente operativo. Ya no necesitas crear flows ni jobs manualmente."}</div>
-              <form id="genericAgentSetupForm">
-                <div class="field"><label for="genericAgentName">Nombre del agente</label><input id="genericAgentName" name="name" placeholder="${isCustomerSupport ? "Asistente de soporte web" : "Agente de Instagram MX"}" /></div>
-                <div class="field"><label for="genericAgentType">Tipo de agente</label><select id="genericAgentType" name="agentType"></select></div>
-                <div class="field"><label for="genericAgentObjective">Objetivo</label><input id="genericAgentObjective" name="objective" placeholder="${isCustomerSupport ? "Resolver dudas de soporte y escalar cuando haga falta" : "Responder preguntas frecuentes y captar leads"}" /></div>
-                <div id="genericAgentConfigFields"></div>
-                <div class="field"><label for="genericFlowTrigger">Activacion</label><select id="genericFlowTrigger" name="triggerType"></select></div>
-                <div class="field"><label for="genericFlowAction">Accion principal</label><select id="genericFlowAction" name="actionType"></select></div>
-                <div class="field"><label for="genericFlowPrompt">${isCustomerSupport ? "Guion de atención" : "Guion base"}</label><textarea id="genericFlowPrompt" name="promptTemplate" placeholder="${isCustomerSupport ? "Define cómo saluda, cómo resuelve, cuándo ofrece artículos y cuándo debe escalar." : "Define el copy, tono y reglas del agente para esta rutina."}"></textarea></div>
-                <div class="section-actions"><button class="button" type="submit">${isCustomerSupport ? "Guardar asistente" : "Guardar agente y subagente"}</button></div>
-              </form>
+              <div class="item-title">Agentes multicanal</div>
+              <div class="helper-text" style="margin-bottom: 14px;">La creación principal ahora vive arriba: define un agente una sola vez y selecciona todas las cuentas/canales donde debe operar.</div>
+              <div class="section-actions">
+                <button class="soft-button" type="button" data-scroll-global-agent>Ir a crear agente</button>
+              </div>
             </div>
             <div class="section-card">
-              <div class="chart-title">${isCustomerSupport ? "Rutinas del asistente" : "Subagentes operativos"}</div>
-              <div id="genericSubagentConfigFields" style="margin-bottom: 16px;"></div>
-              ${flows.length
-                ? flows.map((item) => `
-                    <div class="list-card">
-                      <div class="item-row">
-                        <div>
-                          <div class="item-title">${escapeHtml(item.name)}</div>
-                          <div class="item-sub">${escapeHtml(item.objective || item.description || "Sin descripcion")}</div>
-                        </div>
-                        <div class="badge ${item.status === "active" ? "ok" : "warn"}">${escapeHtml(actionLabelById[item.action_type] || item.status || "active")}</div>
-                      </div>
-                      <div class="helper-text" style="margin-top: 10px;">${escapeHtml(triggerLabelById[item.trigger_type] || item.trigger_type || "Sin activacion")}</div>
-                    </div>
-                  `).join("")
-                : `<div class="empty-state"><div class="empty">Todavia no hay subagentes para esta cuenta.</div></div>`}
+              <div class="chart-title">Accion manual</div>
+              <div class="helper-text" style="margin-bottom: 14px;">Ejecuta manualmente cualquier accion disponible para ${escapeHtml(platform.label)}: publicar, responder, mandar media, captar lead o lanzar una campaña si el canal lo soporta.</div>
+              ${renderManualActionSection("genericManualActionForm", actionDefinitions, {
+                targetPlaceholder: "Ej: @usuario, post, comentario, chat, lead o URL",
+                promptPlaceholder: "Indica que debe hacer el agente manualmente, con copy, contexto, destino, media, restricciones y criterio de cierre."
+              })}
             </div>
           </div>
 
@@ -2223,12 +3329,6 @@
               <div class="chart-title">Agentes de la cuenta</div>
               ${agents.length
                 ? agents.map((item) => `
-                    ${(() => {
-                      const flow = flowByAgentId.get(item.id);
-                      const flowSummary = flow
-                        ? `${triggerLabelById[flow.trigger_type] || flow.trigger_type || "Sin activacion"} · ${actionLabelById[flow.action_type] || flow.action_type || "Sin accion"}`
-                        : "Sin subagente operativo";
-                      return `
                     <div class="list-card">
                       <div class="item-row">
                         <div>
@@ -2237,31 +3337,28 @@
                         </div>
                         <div class="badge info">${escapeHtml(getAgentTypeLabel(platform.id, item.config?.agentType))}</div>
                       </div>
-                      <div class="helper-text" style="margin-top: 10px;">${escapeHtml(flowSummary)}</div>
+                      <div class="helper-text" style="margin-top: 10px;">Activacion: ${escapeHtml(item.config?.defaultTriggerType || "manual")}</div>
+                      <div class="helper-text" style="margin-top: 8px;">LLM: ${escapeHtml(item.config?.llmProvider || "openrouter")} · Tools: ${escapeHtml((item.config?.tools || []).join(", ") || "pendientes")}</div>
                     </div>
-                  `;
-                    })()}
                   `).join("")
                 : `<div class="empty-state"><div class="empty">Todavia no hay agentes para esta cuenta.</div></div>`}
             </div>
             <div class="section-card">
               <div class="chart-title">Estado de los agentes</div>
               ${agents.length
-                ? agents.map((item) => {
-                    const flow = flowByAgentId.get(item.id);
-                    return `
+                ? agents.map((item) => `
                       <div class="list-card">
                         <div class="item-row">
                           <div>
                             <div class="item-title">${escapeHtml(item.name)}</div>
                             <div class="item-sub">${escapeHtml(getAgentTypeLabel(platform.id, item.config?.agentType))}</div>
                           </div>
-                          <div class="badge ${flow ? "ok" : "warn"}">${flow ? "Listo" : "Incompleto"}</div>
+                          <div class="badge ok">Listo</div>
                         </div>
-                        <div class="helper-text" style="margin-top: 10px;">${escapeHtml(flow ? `${triggerLabelById[flow.trigger_type] || flow.trigger_type || "Sin activacion"} · ${actionLabelById[flow.action_type] || flow.action_type || "Sin accion"}` : "Aun no tiene subagente operativo.")}</div>
+                        <div class="helper-text" style="margin-top: 10px;">Puede operar con accion manual o con activaciones futuras del canal.</div>
+                        <div class="helper-text" style="margin-top: 8px;">Tools: ${escapeHtml((item.config?.tools || []).join(", ") || "pendientes")}</div>
                       </div>
-                    `;
-                  }).join("")
+                  `).join("")
                 : `<div class="empty-state"><div class="empty">Todavia no hay agentes para esta cuenta.</div></div>`}
             </div>
           </div>
@@ -2284,77 +3381,15 @@
           </div>
         `;
 
-        fillValueSelect(document.getElementById("genericAgentType"), agentTypeDefinitions, "agent_type", "label", "Selecciona un tipo");
-        fillValueSelect(document.getElementById("genericFlowTrigger"), triggerDefinitions, "trigger_type", "label", "Selecciona un trigger");
-
-        const genericAgentType = document.getElementById("genericAgentType");
-        const genericAgentConfigFields = document.getElementById("genericAgentConfigFields");
-        const genericFlowAction = document.getElementById("genericFlowAction");
-        const genericSubagentConfigFields = document.getElementById("genericSubagentConfigFields");
-        const genericAgentSubmit = document.querySelector("#genericAgentSetupForm button[type='submit']");
-
-        const renderAgentTypeConfig = () => {
-          genericAgentConfigFields.innerHTML = renderAgentConfigFields(platform.id, genericAgentType.value);
-        };
-
-        const syncActionOptions = () => {
-          const allowedActions = genericAgentType.value
-            ? (getAgentTypeDefinition(platform.id, genericAgentType.value)?.allowed_action_types ?? [])
-            : [];
-          const visibleActions = allowedActions.length
-            ? actionDefinitions.filter((item) => allowedActions.includes(item.action_type))
-            : actionDefinitions;
-          genericFlowAction.innerHTML = [`<option value="">Selecciona una accion</option>`, ...visibleActions.map((item) => `<option value="${escapeHtml(item.action_type)}">${escapeHtml(item.label)}</option>`)].join("");
-          genericFlowAction.value = visibleActions[0]?.action_type || "";
-          genericSubagentConfigFields.innerHTML = renderSubagentConfigFields(platform.id, genericAgentType.value, genericFlowAction.value);
-        };
-
-        genericAgentType.value = agentTypeDefinitions[0]?.agent_type || "";
-        document.getElementById("genericFlowTrigger").value = triggerDefinitions[0]?.trigger_type || "";
-        renderAgentTypeConfig();
-        syncActionOptions();
-        genericAgentType.addEventListener("change", () => {
-          renderAgentTypeConfig();
-          syncActionOptions();
+        const genericManualActionForm = document.getElementById("genericManualActionForm");
+        detailRoot.querySelectorAll("[data-scroll-global-agent]").forEach((button) => {
+          button.addEventListener("click", () => {
+            setEditorTab("agents");
+          });
         });
-        genericFlowAction.addEventListener("change", () => {
-          genericSubagentConfigFields.innerHTML = renderSubagentConfigFields(platform.id, genericAgentType.value, genericFlowAction.value);
-        });
-        if (!agentTypeDefinitions.length) {
-          genericAgentSubmit.disabled = true;
-          genericAgentConfigFields.innerHTML = `<div class="empty-state"><div class="empty">Este canal no usa agentes configurables en esta vista.</div></div>`;
+        if (genericManualActionForm) {
+          genericManualActionForm.addEventListener("submit", (event) => submitManualChannelAction(event, account, platform, actionDefinitions));
         }
-
-        document.getElementById("genericAgentSetupForm").addEventListener("submit", async (event) => {
-          event.preventDefault();
-          const form = new FormData(event.currentTarget);
-          const agentType = String(form.get("agentType") || "");
-          const actionType = String(form.get("actionType") || "");
-          const selectedAction = actionDefinitions.find((item) => item.action_type === actionType);
-          const createdAgent = await postJson("/api/channels/agents", {
-            accountId: account.id,
-            channel: platform.id,
-            name: form.get("name"),
-            agentType,
-            objective: form.get("objective"),
-            status: "active",
-            config: buildAgentConfigPayload(form, platform.id, agentType)
-          });
-          await postJson("/api/channels/flows", {
-            accountId: account.id,
-            channel: platform.id,
-            agentId: createdAgent?.id,
-            name: `${String(form.get("name") || "Agente")} · ${selectedAction?.label || "Rutina"}`,
-            objective: form.get("objective"),
-            triggerType: form.get("triggerType"),
-            actionType,
-            contentType: selectedAction?.content_type,
-            promptTemplate: form.get("promptTemplate"),
-            actionConfig: buildSubagentConfigPayload(form, agentType),
-            status: "active"
-          });
-          await loadData("Agente personalizado.");
-        });
       }
 
       function renderPhoneDetail(account) {
@@ -2385,27 +3420,6 @@
           </div>
           <div class="chart-grid" style="margin-top: 14px;">
             <div class="section-card">
-              <div class="item-title">Crear agente de voz</div>
-              <form id="agentForm">
-                <div class="field"><label for="agentName">Nombre</label><input id="agentName" name="name" placeholder="Collections bot" /></div>
-                <div class="field"><label for="fromNumber">From number</label><input id="fromNumber" name="fromNumber" placeholder="+15005550006" value="${escapeHtml(account.handle || "")}" /></div>
-                <div class="section-actions"><button class="button" type="submit">Guardar agente</button></div>
-              </form>
-            </div>
-            <div class="section-card">
-              <div class="item-title">Crear flow</div>
-              <form id="flowForm">
-                <div class="field"><label for="flowName">Nombre</label><input id="flowName" name="name" placeholder="Appointment confirmation" /></div>
-                <div class="field"><label for="flowObjective">Objetivo</label><input id="flowObjective" name="objective" placeholder="Confirmar la cita de manana" /></div>
-                <div class="field"><label for="flowPrompt">Prompt</label><textarea id="flowPrompt" name="promptTemplate" placeholder="Presiona 1 para confirmar, 2 para callback, 3 para cancelar"></textarea></div>
-                <div class="field"><label for="flowAutomationId">Automation</label><select id="flowAutomationId" name="automationId"></select></div>
-                <div class="section-actions"><button class="button" type="submit">Guardar flow</button></div>
-              </form>
-            </div>
-          </div>
-
-          <div class="chart-grid" style="margin-top: 14px;">
-            <div class="section-card">
               <div class="item-title">Trigger test call</div>
               <form id="jobForm">
                 <div class="field"><label for="jobAgentId">Agent</label><select id="jobAgentId" name="agentId"></select></div>
@@ -2427,8 +3441,6 @@
           </div>
         `;
 
-        const agentForm = document.getElementById("agentForm");
-        const flowForm = document.getElementById("flowForm");
         const jobForm = document.getElementById("jobForm");
         const jobsList = document.getElementById("jobsList");
         const flowsList = document.getElementById("flowsList");
@@ -2436,13 +3448,12 @@
         const jobToNumber = document.getElementById("jobToNumber");
         const phoneConfigButton = document.getElementById("phoneConfigButton");
 
-        fillSelect(document.getElementById("flowAutomationId"), snapshot?.automations ?? [], "name", "Selecciona una automation");
         fillSelect(document.getElementById("jobAgentId"), snapshot?.agents ?? [], "name", "Selecciona un agent");
         fillSelect(document.getElementById("jobFlowId"), snapshot?.flows ?? [], "name", "Selecciona un flow");
         fillSelect(document.getElementById("jobContactId"), snapshot?.contacts ?? [], "full_name", "Contacto opcional");
 
         phoneConfigButton.addEventListener("click", () => {
-          setStatus(snapshot?.configured ? "Twilio esta conectado para esta cuenta." : "Falta configurar TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN o TWILIO_WEBHOOK_BASE_URL.", !snapshot?.configured, Boolean(snapshot?.configured));
+          setStatus(snapshot?.configured ? "Twilio esta listo para esta cuenta." : "Falta configurar TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN o TWILIO_WEBHOOK_BASE_URL.", !snapshot?.configured, Boolean(snapshot?.configured));
         });
 
         jobContactId.addEventListener("change", (event) => {
@@ -2480,26 +3491,33 @@
             `).join("")
           : `<div class="empty-state"><div class="empty">No hay flows activos todavia.</div></div>`;
 
-        agentForm.addEventListener("submit", async (event) => {
-          event.preventDefault();
-          const form = new FormData(agentForm);
-          await postJson("/api/voice/agents", { name: form.get("name"), fromNumber: form.get("fromNumber") });
-          await loadData("Agente de voz creado.");
-        });
-
-        flowForm.addEventListener("submit", async (event) => {
-          event.preventDefault();
-          const form = new FormData(flowForm);
-          await postJson("/api/voice/flows", { name: form.get("name"), objective: form.get("objective"), promptTemplate: form.get("promptTemplate"), automationId: form.get("automationId") || undefined, status: "active" });
-          await loadData("Flow creado.");
-        });
-
         jobForm.addEventListener("submit", async (event) => {
           event.preventDefault();
           const form = new FormData(jobForm);
           await postJson("/api/voice/jobs", { agentId: form.get("agentId"), flowId: form.get("flowId"), contactId: form.get("contactId") || undefined, toNumber: form.get("toNumber") });
           await loadData("Call job creado.");
         });
+      }
+
+      async function loadCustomerSupportInboxSession(sessionId, options = {}) {
+        if (!sessionId || state.customerSupportInboxLoading[sessionId]) return;
+        state.customerSupportInboxLoading[sessionId] = true;
+        renderApp();
+        try {
+          if (!options.silent) setStatus("Cargando conversacion del inbox...", false);
+          const response = await fetch(`/api/customer-support/inbox/sessions/${encodeURIComponent(sessionId)}`);
+          const data = await safeJson(response);
+          if (!response.ok) throw new Error(data?.error || "No se pudo cargar la conversacion.");
+          if (data?.session) upsertCustomerSupportInboxSession(data.session);
+          state.customerSupportInboxSessionDetails[sessionId] = data;
+          renderApp();
+          if (!options.silent) setStatus("Conversacion cargada.", false, true);
+        } catch (error) {
+          setStatus(error.message || "No se pudo cargar la conversacion.", true);
+        } finally {
+          delete state.customerSupportInboxLoading[sessionId];
+          renderApp();
+        }
       }
 
       async function postJson(url, payload) {
@@ -2510,22 +3528,40 @@
         return data;
       }
 
+      async function patchJson(url, payload) {
+        setStatus("Actualizando estado...", false);
+        const response = await fetch(url, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        const data = await safeJson(response);
+        if (!response.ok) throw new Error(data?.error || "No se pudo actualizar la sesion.");
+        return data;
+      }
+
       async function loadData(message) {
         try {
           setStatus(message || "Cargando datos del backend...", false);
-          const [voiceResponse, channelsResponse] = await Promise.all([fetch("/api/voice"), fetch("/api/channels")]);
+          const [voiceResponse, channelsResponse, inboxResponse] = await Promise.all([
+            fetch("/api/voice"),
+            fetch("/api/channels"),
+            fetch("/api/customer-support/inbox/sessions?limit=200")
+          ]);
           const voiceData = await safeJson(voiceResponse);
           const channelsData = await safeJson(channelsResponse);
+          const inboxData = await safeJson(inboxResponse);
           if (!voiceResponse.ok) throw new Error(voiceData?.error || "No se pudo cargar voice.");
           if (!channelsResponse.ok) throw new Error(channelsData?.error || "No se pudo cargar canales.");
           state.snapshot = voiceData;
           state.channelSnapshot = channelsData;
+          state.customerSupportInboxSessions = inboxResponse.ok ? sortCustomerSupportSessions(inboxData?.data || []) : [];
+          if (!inboxResponse.ok) {
+            console.warn("Customer support inbox unavailable", inboxData?.error || inboxResponse.status);
+          }
           syncAccountsFromChannels();
           renderApp();
           setStatus(message || "Backend sincronizado.", false, true);
         } catch (error) {
           state.snapshot = null;
           state.channelSnapshot = null;
+          state.customerSupportInboxSessions = [];
           renderApp();
           setStatus(error.message || "No se pudo cargar el backend.", true);
         }
@@ -2561,6 +3597,8 @@
         state.isEditing = false;
         renderApp();
       });
+      connectionTabButton.addEventListener("click", () => setEditorTab("connections"));
+      agentsTabButton.addEventListener("click", () => setEditorTab("agents"));
 
       addAccountForm.addEventListener("submit", async (event) => {
         event.preventDefault();

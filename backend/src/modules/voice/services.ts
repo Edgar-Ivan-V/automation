@@ -47,7 +47,8 @@ import {
   getTwilioConfig,
   isTwilioConfigured
 } from "./twilio.js";
-import { generateVoiceAiTurn, isOpenAiConfigured } from "./openai.js";
+import { generateVoiceAiTurn } from "./openai.js";
+import { isElevenLabsConfigured } from "./elevenlabs.js";
 import { requireServiceSupabaseClient } from "../shared/supabase-client.js";
 import { NotFoundError, ValidationError } from "../shared/errors.js";
 import { optionalString, requireNonEmptyString, requireNumber } from "../shared/validation.js";
@@ -464,8 +465,8 @@ export async function processAiCallTurn(input: {
   if (getFlowMode(flow) !== "ai") {
     throw new ValidationError("Flow is not configured for AI conversation.");
   }
-  if (!isOpenAiConfigured()) {
-    throw new ValidationError("OPENAI_API_KEY or OPENROUTER_API_KEY is required for AI voice flows.");
+  if (!isElevenLabsConfigured()) {
+    throw new ValidationError("ELEVENLABS_API_KEY and ELEVENLABS_AGENT_ID are required for AI voice flows.");
   }
 
   const digits = optionalString(input.digits, "digits");
@@ -592,7 +593,8 @@ export async function getVoiceAutomationSnapshot(organizationId: string) {
 
   return {
     configured: isTwilioConfigured(),
-    aiConfigured: isOpenAiConfigured(),
+    aiConfigured: isElevenLabsConfigured(),
+    aiProvider: "elevenlabs",
     agents,
     flows,
     jobs,

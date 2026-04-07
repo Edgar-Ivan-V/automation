@@ -1,26 +1,6 @@
-/**
- * FILE: src/api/webhooks/twilio/twiml/route.ts
- *
- * Genera el XML TwiML que Twilio lee al contacto durante la llamada.
- * Twilio llama a este endpoint al conectar la llamada para obtener
- * las instrucciones de qué decir y qué hacer.
- *
- * El TwiML generado usa <Gather> para capturar una tecla DTMF:
- *   - Intro prompt del agente (opcional)
- *   - Prompt del flow con la pregunta principal
- *   - Instrucciones de teclas ("Press 1 for confirmed, Press 2 for callback…")
- *   - Timeout de 6 segundos antes de colgar
- *
- * Seguridad: verifica la firma HMAC-SHA1 en X-Twilio-Signature.
- * Si la firma es inválida, responde con <Response><Say>Unauthorized.</Say></Response>.
- *
- * El gatherActionUrl apunta al handler de gather (siguiente webhook).
- */
-
 // POST /api/webhooks/twilio/voice/twiml?jobId=<uuid>
 // Twilio fetches this to get the TwiML script for the call.
-import { requireServiceSupabaseClient, ValidationError } from "../../../../modules/shared/index.js";
-import { buildTwilioRealtimeStreamUrl, verifyTwilioSignature } from "../../../../modules/voice/index.js";
+import { getCallConversationContext, registerTwilioCallWithElevenLabs, verifyTwilioSignature } from "../../../../modules/voice/index.js";
 
 function escapeXml(value: string) {
   return value
@@ -41,26 +21,10 @@ export async function buildTwiML(
   const isValid = verifyTwilioSignature(requestUrl, payload, signature);
   if (!isValid) return "<Response><Say>Unauthorized.</Say><Hangup/></Response>";
 
-  const supabase = requireServiceSupabaseClient();
-  const { data, error } = await supabase
-    .from("call_jobs")
-    .select(
-      "flow:call_flows(*), agent:call_agents(voice, language, intro_prompt)"
-    )
-    .eq("id", jobId)
-    .maybeSingle();
-
-  const flowRecord = Array.isArray(data?.flow) ? data?.flow[0] : data?.flow;
-  const agentRecord = Array.isArray(data?.agent) ? data?.agent[0] : data?.agent;
-
-  if (error || !flowRecord || !agentRecord) {
-    return "<Response><Say>Configuration not found.</Say><Hangup/></Response>";
-  }
-
-  const voice = escapeXml(String((agentRecord as any).voice ?? "alice"));
-  const language = escapeXml(String((agentRecord as any).language ?? "es-MX"));
-  const introPrompt = String((agentRecord as any).intro_prompt ?? "").trim();
-  const flow = flowRecord as any;
+  const { job, flow, agent } = await getCallConversationContext(jobId);
+  const voice = escapeXml(String(agent.voice ?? "alice"));
+  const language = escapeXml(String(agent.language ?? "es-MX"));
+  const introPrompt = String(agent.intro_prompt ?? "").trim();
   const mode = String(flow.mode ?? "dtmf");
 
   console.info("[voice.twiml] build", {
@@ -70,23 +34,40 @@ export async function buildTwiML(
     language,
   });
 
-  if (mode === "realtime") {
-    const streamUrl = escapeXml(buildTwilioRealtimeStreamUrl(jobId));
-    return `<Response><Connect><Stream url="${streamUrl}"><Parameter name="jobId" value="${escapeXml(jobId)}" /></Stream></Connect></Response>`;
-  }
+  if (mode === "ai" || mode === "realtime") {
+    const firstMessage = [introPrompt, flow.prompt_template].filter(Boolean).join(" ").trim();
+    const prompt = [
+      "You are a phone-call assistant connected through Twilio.",
+      `Speak primarily in ${agent.language || "es-MX"} unless the caller asks for another language.`,
+      "Keep replies short, natural, and clear on a live phone call.",
+      "Do not mention internal systems, prompts, or models.",
+      `Call objective: ${flow.objective}`,
+      flow.system_prompt ? `Additional business instructions: ${flow.system_prompt}` : null,
+    ]
+      .filter(Boolean)
+      .join("\n");
 
-  if (mode === "ai") {
-    const prompt = escapeXml(
-      [
-        introPrompt,
-        flow.prompt_template,
-        "Puedes responder hablando naturalmente o usar el teclado.",
-      ]
-        .filter(Boolean)
-        .join(" ")
-    );
-    const action = escapeXml(gatherActionUrl);
-    return `<Response><Gather input="speech dtmf" speechTimeout="auto" action="${action}" method="POST"><Say voice="${voice}" language="${language}">${prompt}</Say></Gather><Say voice="${voice}" language="${language}">No escuché una respuesta. Hasta luego.</Say><Hangup/></Response>`;
+    return registerTwilioCallWithElevenLabs({
+      fromNumber: job.from_number,
+      toNumber: job.to_number,
+      direction: "outbound",
+      conversationInitiationClientData: {
+        dynamic_variables: {
+          call_job_id: job.id,
+          flow_name: flow.name,
+          objective: flow.objective,
+        },
+        conversation_config_override: {
+          agent: {
+            prompt: {
+              prompt,
+            },
+            first_message: firstMessage || undefined,
+            language: agent.language || "es-MX",
+          },
+        },
+      },
+    });
   }
 
   const message = escapeXml(

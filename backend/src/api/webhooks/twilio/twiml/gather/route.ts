@@ -1,32 +1,6 @@
-/**
- * FILE: src/api/webhooks/twilio/twiml/gather/route.ts
- *
- * Procesa la tecla DTMF que el contacto presionó durante la llamada.
- * Twilio llama a este endpoint después del <Gather> del TwiML principal
- * con el dígito capturado en el campo "Digits" del body.
- *
- * Mapea el dígito al outcome del flow:
- *   - success_key (ej: "1") → outcome "confirmed"
- *   - secondary_key (ej: "2") → outcome "callback"
- *   - fallback_key (ej: "3") → outcome "not_interested"
- *   - sin input / dígito no reconocido → outcome "no_response"
- *
- * Seguridad: verifica la firma HMAC-SHA1. Si inválida → <Hangup/>.
- * Responde con TwiML de confirmación: "Thank you. We registered <outcome>."
- */
-
 // POST /api/webhooks/twilio/voice/twiml/gather?jobId=<uuid>
 // Twilio posts here with the digit the caller pressed.
-import { completeCallJobFromGather, getCallConversationContext, processAiCallTurn, verifyTwilioSignature } from "../../../../../modules/voice/index.js";
-
-function escapeXml(value: string) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&apos;");
-}
+import { completeCallJobFromGather, getCallConversationContext, verifyTwilioSignature } from "../../../../../modules/voice/index.js";
 
 export async function handleGather(
   jobId: string,
@@ -49,31 +23,8 @@ export async function handleGather(
     to: payload.To ?? null,
   });
 
-  if ((context.flow.mode ?? "dtmf") === "ai") {
-    const result = await processAiCallTurn({
-      jobId,
-      digits: payload.Digits ?? null,
-      speechResult: payload.SpeechResult ?? null,
-    });
-
-    const voice = escapeXml(String(result.agent.voice ?? "alice"));
-    const language = escapeXml(String(result.agent.language ?? "es-MX"));
-    const message = escapeXml(result.reply);
-
-    console.info("[voice.gather] ai.result", {
-      jobId,
-      shouldHangup: result.shouldHangup,
-      outcome: result.job.outcome ?? null,
-      reply: result.reply,
-      transcript: result.job.transcript ?? null,
-    });
-
-    if (result.shouldHangup) {
-      return `<Response><Say voice="${voice}" language="${language}">${message}</Say><Hangup/></Response>`;
-    }
-
-    const action = escapeXml(requestUrl);
-    return `<Response><Gather input="speech dtmf" speechTimeout="auto" action="${action}" method="POST"><Say voice="${voice}" language="${language}">${message}</Say></Gather><Say voice="${voice}" language="${language}">No escuché una respuesta. Hasta luego.</Say><Hangup/></Response>`;
+  if ((context.flow.mode ?? "dtmf") === "ai" || (context.flow.mode ?? "dtmf") === "realtime") {
+    return "<Response><Hangup/></Response>";
   }
 
   const result = await completeCallJobFromGather({

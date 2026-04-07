@@ -9,8 +9,8 @@ Backend modules and API handlers for the automations system.
 | Module | Description |
 |--------|-------------|
 | `automations` | CRUD for automation records - trigger/action definitions |
-| `voice` | Twilio-powered outbound call bots (agents, flows, jobs) |
-| `channels` | Omnichannel social/email bots and jobs for Instagram, TikTok, WhatsApp, Messenger, X, Facebook, Email |
+| `voice` | Twilio outbound call bots with ElevenLabs AI voice flows |
+| `channels` | Omnichannel social/email bots and jobs for Instagram, TikTok, WhatsApp, Messenger, X, Facebook, LinkedIn, YouTube, Telegram, Email |
 | `shared` | Supabase client, validation helpers, error types |
 
 ### API handlers (`src/api/`)
@@ -28,6 +28,8 @@ Backend modules and API handlers for the automations system.
 | `/api/channels/agents` | POST | Create a channel agent |
 | `/api/channels/flows` | POST | Create a channel flow |
 | `/api/channels/jobs` | POST | Create a channel job |
+| `/api/channels/oauth/meta/start` | GET | Start Meta OAuth for Facebook, Instagram, Messenger, or WhatsApp accounts |
+| `/api/channels/oauth/meta/callback` | GET | Meta OAuth callback that creates a connected channel account |
 | `/api/webhooks/twilio/voice/status` | POST | Twilio status callback |
 | `/api/webhooks/twilio/voice/twiml` | POST | TwiML script for the call |
 | `/api/webhooks/twilio/voice/twiml/gather` | POST | DTMF digit handler |
@@ -91,13 +93,23 @@ Load the development seed into a fresh database:
 | `TWILIO_AUTH_TOKEN` | Yes (voice) | Twilio auth token |
 | `TWILIO_FROM_NUMBER` | Yes (voice) | E.164 phone number to call from |
 | `TWILIO_WEBHOOK_BASE_URL` | Yes (voice) | Public base URL for Twilio webhooks |
-| `OPENAI_API_KEY` | Optional (AI voice) | API key used when a call flow runs in `ai` mode with OpenAI |
-| `OPENAI_MODEL` | Optional (AI voice) | OpenAI text model for spoken call turns, defaults to `gpt-4.1-mini` |
-| `OPENAI_REALTIME_MODEL` | Optional (Realtime voice) | OpenAI realtime model, defaults to `gpt-realtime` |
-| `OPENAI_REALTIME_VOICE` | Optional (Realtime voice) | Built-in realtime voice, defaults to `marin` |
-| `OPENAI_REALTIME_TRANSCRIBE_MODEL` | Optional (Realtime voice) | Input transcription model, defaults to `gpt-4o-mini-transcribe` |
-| `OPENROUTER_API_KEY` | Optional (AI voice) | If set, the backend uses OpenRouter instead of OpenAI |
-| `OPENROUTER_MODEL` | Optional (AI voice) | OpenRouter model slug, defaults to `openai/gpt-4.1-mini` |
+| `ELEVENLABS_API_KEY` | Optional (AI voice) | API key used when a call flow runs in `ai` or `realtime` mode with ElevenLabs |
+| `ELEVENLABS_AGENT_ID` | Optional (AI voice) | ElevenLabs agent ID used to register Twilio calls for AI conversations |
+| `ELEVENLABS_BASE_URL` | Optional (AI voice) | Override base URL for ElevenLabs API, defaults to `https://api.elevenlabs.io/v1` |
+| `OPENROUTER_API_KEY` | Optional (channel agents) | OpenRouter key used by channel agents; new agent configs default to `llmProvider=openrouter` |
+| `OPENROUTER_MODEL` | Optional (channel agents) | OpenRouter model stored with new channel agent configs |
+| `OPENROUTER_BASE_URL` | Optional (channel agents) | OpenRouter-compatible API base URL |
+| `SOCIAL_OAUTH_REDIRECT_BASE_URL` | Optional (social login) | Public backend base URL used for OAuth callbacks |
+| `META_GRAPH_API_VERSION` | Optional (social login) | Meta Graph API version used for login redirects and token exchange |
+| `META_OAUTH_STATE_SECRET` | Optional (social login) | Secret used to sign OAuth state; falls back to `SUPABASE_SERVICE_ROLE_KEY` |
+| `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET` | Yes (Facebook/Messenger/WhatsApp login) | Meta app credentials used to connect those channels |
+| `INSTAGRAM_APP_ID` / `INSTAGRAM_APP_SECRET` | Yes (Instagram login) | Meta app credentials used to connect Instagram |
+| `FACEBOOK_OAUTH_SCOPES`, `INSTAGRAM_OAUTH_SCOPES`, `MESSENGER_OAUTH_SCOPES`, `WHATSAPP_OAUTH_SCOPES` | Optional (social login) | Comma-separated Meta OAuth scopes for each channel |
+| `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET`, `LINKEDIN_ACCESS_TOKEN`, `LINKEDIN_ORGANIZATION_ID` | Optional (LinkedIn) | Credentials and organization id reserved for a future LinkedIn connector |
+| `YOUTUBE_CLIENT_ID`, `YOUTUBE_CLIENT_SECRET`, `YOUTUBE_REFRESH_TOKEN`, `YOUTUBE_CHANNEL_ID` | Optional (YouTube) | Google/YouTube credentials reserved for a future YouTube connector |
+| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_DEFAULT_CHAT_ID` | Optional (Telegram) | Telegram bot token and default chat id reserved for a future Telegram connector |
+
+For `ai` and `realtime` flows, configure the ElevenLabs agent with Twilio-compatible audio (`mu-law 8000 Hz`) for both input and output.
 
 ## Local auth bypass
 
